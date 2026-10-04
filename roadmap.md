@@ -18,3 +18,6 @@
 - [x] Group student interview articles and videos by student, showing only available media
 - [x] Add verified official profile photos to staff list and detail views, with safe fallbacks
 - [x] 教师官网 Profile 全量同步 + 每日自动更新
+- [x] 搜索优先匹配姓名
+- [x] 收录全部院系在职教师（约 1,440 位）
+- [ ] 首次全量资料导入完成后更换同步口令（导入进行中）

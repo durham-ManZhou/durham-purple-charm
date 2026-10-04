@@ -173,11 +173,11 @@ const campusScenes = [
   { image: campusLibrary, title: "图书馆", caption: "安静的阅览空间，为个人学习与资料查阅提供专注环境。" },
   { image: campusRiverside, title: "河畔步道", caption: "沿威尔河漫步，可以从城市绿意中远望杜伦的历史天际线。" },
   { image: campusHero, title: "校园建筑", caption: "历史建筑与现代大学生活在杜伦城中自然交融。" },
-];
+] as const;
 
 function CampusGallery() {
   const [active, setActive] = useState(0);
-  const scene = campusScenes[active];
+  const scene = campusScenes[active] ?? campusScenes[0];
   const show = (next: number) => setActive((next + campusScenes.length) % campusScenes.length);
   return <section className="mt-8" aria-label="校园环境图集">
     <div className="relative overflow-hidden rounded-md bg-muted">

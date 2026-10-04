@@ -215,6 +215,13 @@ export type Database = {
     }
     Functions: {
       acquire_staff_sync_lease: { Args: never; Returns: boolean }
+      booking_slot_counts: {
+        Args: { _date: string }
+        Returns: {
+          booked: number
+          time_slot: string
+        }[]
+      }
       search_staff: {
         Args: {
           _departments?: string[]

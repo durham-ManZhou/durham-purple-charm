@@ -13,6 +13,7 @@ import campusLibrary from "@/assets/campus-library.jpg";
 import campusRiverside from "@/assets/campus-riverside.jpg";
 import logoDark from "@/assets/durham-logo-dark.svg.asset.json";
 import logoWhite from "@/assets/durham-logo-white.svg.asset.json";
+import interviewVideo from "@/assets/student-interview-demo.mp4.asset.json";
 import studentPortrait from "@/assets/student-portrait.jpg";
 import studentsStudy from "@/assets/students-study.jpg";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ type MainTab = "school" | "overseas" | "contact";
 type SchoolView = "index" | "about" | "faculty" | "campus" | "interviews";
 type ProjectType = "国际本科" | "硕士项目" | "本科直博";
 type Project = { id: number; type: ProjectType; name: string; partner: string; country: string; mode: string; subject: string; highlight: string; image: string };
+type StudentStory = { id: number; type: "文章" | "视频"; name: string; offer: string; quote: string; title: string; image: string; video?: string };
 type FacultyGroup = { id: string; name: string; english: string; description: string; departments: { name: string; english: string }[] };
 
 const facultyGroups: FacultyGroup[] = [
@@ -107,6 +109,13 @@ const projects: Project[] = [
   { id: 4, type: "本科直博", name: "杜伦大学研究型学位项目", partner: "Durham University", country: "英国", mode: "研究型", subject: "跨学科研究", highlight: "导师指导 · 前沿研究", image: campusHero },
 ];
 
+const studentStories: StudentStory[] = [
+  { id: 1, type: "文章", name: "学生 A", offer: "杜伦大学 · 商科方向", quote: "学院社区让我很快找到学习节奏。", title: "从申请准备到融入学院生活", image: studentPortrait },
+  { id: 2, type: "文章", name: "学生 B", offer: "杜伦大学 · 人文方向", quote: "小班讨论让我更敢表达自己的观点。", title: "在杜伦学习人文是一种怎样的体验", image: studentsStudy },
+  { id: 3, type: "视频", name: "学生 C", offer: "杜伦大学 · 理工方向", quote: "校园、课堂和研究机会都超出预期。", title: "一分钟走进我的杜伦学习日常", image: campusRiverside, video: interviewVideo.url },
+  { id: 4, type: "视频", name: "学生 D", offer: "杜伦大学 · 硕士项目", quote: "这一年让我建立了清晰的职业方向。", title: "硕士阶段的课程与校园生活", image: campusCourtyard, video: interviewVideo.url },
+];
+
 const fieldClass = "min-h-12 w-full rounded-md border border-input bg-paper px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
 const scrollToAppTop = () => window.scrollTo({ top: 0, behavior: "instant" });
 
@@ -161,14 +170,26 @@ function School({ view, onView, onOverseas, onContact }: { view: SchoolView; onV
 
 function SchoolDetail({ view, onBack }: { view: Exclude<SchoolView, "index">; onBack: () => void }) {
   const [selectedStaff, setSelectedStaff] = useState<StaffProfile | null>(null);
+  const [selectedStory, setSelectedStory] = useState<StudentStory | null>(null);
   if (view === "faculty" && selectedStaff) return <StaffProfilePage staff={selectedStaff} onBack={() => { setSelectedStaff(null); requestAnimationFrame(scrollToAppTop); }} />;
+  if (view === "interviews" && selectedStory) return <StudentStoryDetail story={selectedStory} onBack={() => { setSelectedStory(null); requestAnimationFrame(scrollToAppTop); }} />;
   const data = {
     about: { title: "学校介绍", image: campusHero, body: "杜伦大学创立于 1832 年，是一所位于英国历史名城杜伦的学院制大学。学校将研究与教学融入紧密的学院社区。办学历史、荣誉与资质请以学校官网最新信息为准。" },
     faculty: { title: "师资力量", image: studentsStudy, body: "杜伦大学现有四个学部级学术分类、共 27 个院系。你可以在小程序内按学部浏览，并通过姓名、院系、职称或研究方向等关键词查询已核验的在校教师。" },
     campus: { title: "校园环境", image: campusHero, body: "历史建筑、河畔景观与现代学习空间共同构成杜伦独特的学习环境。当前图集使用演示图片，后续可直接替换为校方正式素材。" },
     interviews: { title: "学生访谈", image: studentPortrait, body: "学生访谈将展示学生姓名、录取院校与真实感言，并支持文章和视频内容。正式访谈素材待校方提供。" },
   }[view];
-  return <article className="animate-rise"><div className="relative h-72"><img src={data.image} alt={data.title} className="size-full object-cover" /><Button size="icon" variant="secondary" onClick={onBack} aria-label="返回" className="absolute left-4 top-4 shadow-md"><ArrowLeft className="size-5" /></Button></div><div className="px-5 py-8"><p className="text-xs font-bold uppercase text-primary">About Durham</p><h1 className="mt-2 text-3xl font-bold">{data.title}</h1><p className="mt-5 text-sm leading-8 text-muted-foreground">{data.body}</p>{view === "faculty" && <FacultyDirectory onSelect={(staff) => { setSelectedStaff(staff); requestAnimationFrame(scrollToAppTop); }} />}{view === "campus" && <CampusGallery />}{view === "interviews" && <div className="mt-7 rounded-md border border-border p-5"><p className="text-xs text-primary">学生故事</p><h2 className="mt-2 text-xl font-bold">在学院社区中找到归属</h2><p className="mt-2 text-sm text-muted-foreground">正式姓名、录取信息与视频待发布。</p></div>}</div></article>;
+  return <article className="animate-rise"><div className="relative h-72"><img src={data.image} alt={data.title} className="size-full object-cover" /><Button size="icon" variant="secondary" onClick={onBack} aria-label="返回" className="absolute left-4 top-4 shadow-md"><ArrowLeft className="size-5" /></Button></div><div className="px-5 py-8"><p className="text-xs font-bold uppercase text-primary">About Durham</p><h1 className="mt-2 text-3xl font-bold">{data.title}</h1><p className="mt-5 text-sm leading-8 text-muted-foreground">{data.body}</p>{view === "faculty" && <FacultyDirectory onSelect={(staff) => { setSelectedStaff(staff); requestAnimationFrame(scrollToAppTop); }} />}{view === "campus" && <CampusGallery />}{view === "interviews" && <StudentStories onSelect={(story) => { setSelectedStory(story); requestAnimationFrame(scrollToAppTop); }} />}</div></article>;
+}
+
+function StudentStories({ onSelect }: { onSelect: (story: StudentStory) => void }) {
+  const [type, setType] = useState<StudentStory["type"]>("文章");
+  const shown = studentStories.filter((story) => story.type === type);
+  return <section className="mt-8" aria-label="学生访谈列表"><div className="grid grid-cols-2 border-b border-border">{(["文章", "视频"] as const).map((item) => <Button key={item} type="button" variant="ghost" onClick={() => setType(item)} className={cn("rounded-none border-b-2", type === item ? "border-primary text-primary" : "border-transparent text-muted-foreground")}>{item === "文章" ? <FileText className="size-4" /> : <Play className="size-4" />}{item}</Button>)}</div><div className="mt-5 space-y-4">{shown.map((story) => <Button key={story.id} type="button" variant="ghost" onClick={() => onSelect(story)} className="h-auto w-full items-stretch justify-start overflow-hidden rounded-md border border-border p-0 text-left shadow-sm"><span className="relative w-28 shrink-0"><img src={story.image} alt={`${story.name}访谈封面`} className="absolute inset-0 size-full object-cover" />{story.type === "视频" && <span className="absolute inset-0 grid place-items-center bg-ink/20"><span className="grid size-10 place-items-center rounded-full bg-paper/90 text-primary"><Play className="ml-0.5 size-4 fill-current" /></span></span>}</span><span className="min-w-0 flex-1 p-4"><span className="text-[10px] font-bold text-primary">{story.type} · 演示内容</span><strong className="mt-1 block text-base">{story.name}</strong><span className="mt-1 block whitespace-normal text-xs font-semibold text-foreground">录取院校：{story.offer}</span><span className="mt-2 line-clamp-2 block whitespace-normal text-xs font-normal leading-5 text-muted-foreground">“{story.quote}”</span></span><ChevronRight className="mr-3 mt-4 size-4 shrink-0 text-primary" /></Button>)}</div><p className="mt-5 text-[11px] leading-5 text-muted-foreground">以上为功能演示内容，并非真实学生访谈；正式上线前可替换为校方审核后的文章、视频和学生资料。</p></section>;
+}
+
+function StudentStoryDetail({ story, onBack }: { story: StudentStory; onBack: () => void }) {
+  return <article className="animate-rise pb-24"><div className="relative bg-ink"><Button type="button" size="icon" variant="secondary" onClick={onBack} aria-label="返回访谈列表" className="absolute left-4 top-4 z-10 shadow-md"><ArrowLeft className="size-5" /></Button>{story.type === "视频" && story.video ? <video src={story.video} poster={story.image} controls playsInline className="aspect-[3/4] w-full object-cover" aria-label={`${story.name}学生访谈视频`} /> : <img src={story.image} alt={`${story.name}学生访谈`} className="aspect-[3/4] w-full object-cover" />}</div><div className="px-5 py-8"><p className="text-xs font-bold text-primary">{story.type} · 功能演示</p><h1 className="mt-2 text-3xl font-bold leading-tight">{story.title}</h1><div className="mt-5 border-l-2 border-primary pl-4"><p className="font-bold">{story.name}</p><p className="mt-1 text-xs text-muted-foreground">录取院校：{story.offer}</p><p className="mt-3 text-sm leading-6 text-foreground">“{story.quote}”</p></div>{story.type === "文章" ? <div className="mt-8 space-y-5 text-sm leading-8 text-muted-foreground"><p>这是一篇用于打通学生访谈阅读流程的演示文章。页面已支持封面、学生信息、录取院校、感言与正文内容展示。</p><p>正式上线时，可将这里替换为经过学生授权和校方审核的真实访谈，包括申请准备、课程体验、学院生活与升学建议。</p></div> : <p className="mt-8 text-sm leading-7 text-muted-foreground">当前为可播放的演示视频，用于验证小程序内播放、暂停、进度控制和返回流程。正式采访视频待校方提供。</p>}<p className="mt-8 border-t border-border pt-4 text-[11px] leading-5 text-muted-foreground">演示姓名、录取方向与感言均为占位内容，不代表真实学生信息。</p></div></article>;
 }
 
 const campusScenes = [
@@ -237,7 +258,7 @@ function Overseas({ onDetail, onConsult }: { onDetail: (id: number) => void; onC
   return <div className="animate-rise"><PageIntro eyebrow="Overseas study" title="海外留学" text="浏览国际本科、硕士项目与本科直博项目。" /><div className="sticky top-[68px] z-10 border-b border-border bg-paper"><div className="grid grid-cols-3">{(["国际本科", "硕士项目", "本科直博"] as ProjectType[]).map((item) => <Button key={item} variant="ghost" onClick={() => { setType(item); requestAnimationFrame(scrollToAppTop); }} className={cn("rounded-none border-b-2 px-2 text-xs", item === type ? "border-primary text-primary" : "border-transparent text-muted-foreground")}>{item}</Button>)}</div></div><section className="px-4 py-6"><div className="grid grid-cols-[1fr_120px] gap-2"><label className="relative"><Search className="absolute left-3 top-4 size-4 text-muted-foreground" /><input aria-label="搜索项目" value={query} onChange={(event) => setQuery(event.target.value)} className={cn(fieldClass, "pl-9")} placeholder="搜索项目" /></label><select aria-label="筛选国家" value={country} onChange={(event) => setCountry(event.target.value)} className={fieldClass}><option>全部国家</option><option>英国</option></select></div><div className="mt-5 space-y-5">{shown.map((project) => <ProjectCard key={project.id} project={project} onDetail={() => onDetail(project.id)} onConsult={onConsult} />)}</div>{shown.length === 0 && <p className="py-14 text-center text-sm text-muted-foreground">没有找到匹配项目</p>}</section></div>;
 }
 
-function ProjectCard({ project, onDetail, onConsult }: { project: Project; onDetail: () => void; onConsult: () => void }) { return <article className="grid grid-cols-[128px_1fr] overflow-hidden rounded-md border border-border bg-paper shadow-sm"><img src={project.image} alt={project.name} className="h-full min-h-52 w-full object-cover" /><div className="min-w-0 p-4"><div className="flex items-center gap-2"><img src={logoDark.url} alt="Durham University 合作院校标志" className="h-6 w-auto max-w-24 object-contain object-left" /><span className="sr-only">{project.partner}</span></div><h2 className="mt-2 text-lg font-bold leading-snug">{project.name}</h2><div className="mt-3 flex flex-wrap gap-1.5"><Tag>{project.country}</Tag><Tag>{project.mode}</Tag><Tag>{project.subject}</Tag></div><p className="mt-3 text-xs font-semibold text-muted-foreground">{project.highlight}</p><div className="mt-4 grid grid-cols-2 gap-2"><Button size="sm" variant="outline" onClick={onDetail}>项目详情</Button><Button size="sm" onClick={onConsult}>直接咨询</Button></div></div></article>; }
+function ProjectCard({ project, onDetail, onConsult }: { project: Project; onDetail: () => void; onConsult: () => void }) { return <article className="overflow-hidden rounded-md border border-border bg-paper shadow-sm"><div className="grid grid-cols-[minmax(120px,38%)_1fr]"><img src={project.image} alt={`${project.name}3:4封面`} className="aspect-[3/4] h-full w-full object-cover" /><div className="min-w-0 p-4"><p className="text-[10px] font-semibold text-muted-foreground">合作院校</p><div className="mt-1 flex items-center gap-2"><img src={logoDark.url} alt="Durham University 合作院校标志" className="h-7 w-auto max-w-28 object-contain object-left" /><span className="sr-only">{project.partner}</span></div><h2 className="mt-3 text-lg font-bold leading-snug">{project.name}</h2><div className="mt-3 flex flex-wrap gap-1.5"><Tag>{project.country}</Tag><Tag>{project.mode}</Tag></div><p className="mt-3 text-xs font-semibold text-primary">{project.highlight}</p><p className="mt-1 text-[11px] text-muted-foreground">{project.subject} · 具体安排以招生简章为准</p></div></div><div className="grid grid-cols-2 gap-2 border-t border-border p-3"><Button size="sm" variant="outline" onClick={onDetail}>项目详情</Button><Button size="sm" onClick={onConsult}>直接咨询</Button></div></article>; }
 
 function ProjectDetail({ project, onBack, onConsult }: { project: Project | undefined; onBack: () => void; onConsult: () => void }) {
   if (!project) return null;

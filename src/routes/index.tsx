@@ -307,27 +307,52 @@ function BookingForm() {
     const { error } = await supabase.from("bookings").insert({ name: String(data.get("name")), phone: String(data.get("phone")), visit_date: date, time_slot: slot, party_size: party, notes: String(data.get("notes") || ""), visit_code: code });
     setSending(false);
     if (error) { toast.error("提交失败，请稍后重试"); return; }
-    toast.success(`预约意向已提交，到访凭证：${code}`, { duration: 8000 });
+    saveMyBooking({ code, date, slot, party });
+    toast.success(`预约成功！到访凭证：${code}`, { duration: 8000 });
     form.reset(); setDate(""); setSlot(TIME_SLOTS[0]); setParty(1); setCounts({});
   };
 
   return <div className="space-y-10"><form onSubmit={submit} className="space-y-5"><SectionHeading eyebrow="Campus visit" title="预约到校" description="上午、下午各一档，每时段限 100 人，约满即止。" /><Field label="姓名 *"><input name="name" required minLength={2} maxLength={20} className={fieldClass} /></Field><Field label="手机号 *"><input name="phone" required pattern="1[3-9][0-9]{9}" inputMode="tel" className={fieldClass} /></Field><Field label="到访日期 *"><input name="date" type="date" min={minDate} required className={fieldClass} value={date} onChange={(e) => setDate(e.target.value)} /></Field><Field label="时段 *（每时段限 100 人）"><div className="grid grid-cols-2 gap-3">{TIME_SLOTS.map((s) => { const full = date ? slotFull(s) : false; return <button key={s} type="button" disabled={full} onClick={() => setSlot(s)} className={cn("rounded-md border px-3 py-3 text-sm transition-colors", full ? "cursor-not-allowed border-border bg-muted text-muted-foreground/50" : slot === s ? "border-primary bg-primary text-primary-foreground" : "border-border bg-paper text-foreground hover:border-primary/50")}><span className="block font-semibold">{s}</span><span className="mt-1 block text-[11px]">{!date ? "请先选择日期" : loadingCounts ? "查询名额…" : full ? "已约满" : `剩余 ${remaining(s)} 个名额`}</span></button>; })}</div></Field><Field label="陪同人数 *"><input name="party" type="number" min={1} max={10} value={party} onChange={(e) => setParty(Math.max(1, Number(e.target.value) || 1))} required className={fieldClass} /></Field><Field label="备注"><textarea name="notes" maxLength={200} rows={4} className={cn(fieldClass, "py-3")} /></Field><div className="rounded-md border-l-2 border-primary bg-muted p-4 text-xs leading-5 text-muted-foreground">预约提交后将生成到访凭证；正式提醒功能待微信订阅消息接入。</div><Button disabled={sending || (date ? currentFull : false)} className="w-full">{sending ? "正在提交…" : date && slotFull(slot) ? "该时段已约满" : "提交预约"}<CalendarDays className="size-4" /></Button></form><CancelBooking onCancelled={() => { if (date) { const d = date; setDate(""); setTimeout(() => setDate(d), 0); } }} /></div>;
 }
+type MyBooking = { code: string; date: string; slot: string; party: number };
+const MY_BOOKINGS_KEY = "durham-my-bookings";
+function loadMyBookings(): MyBooking[] {
+  try { return JSON.parse(localStorage.getItem(MY_BOOKINGS_KEY) || "[]") as MyBooking[]; } catch { return []; }
+}
+function saveMyBooking(b: MyBooking) {
+  const list = loadMyBookings().filter((x) => x.code !== b.code);
+  list.push(b);
+  localStorage.setItem(MY_BOOKINGS_KEY, JSON.stringify(list));
+  window.dispatchEvent(new Event("my-bookings-changed"));
+}
+function removeMyBooking(code: string) {
+  localStorage.setItem(MY_BOOKINGS_KEY, JSON.stringify(loadMyBookings().filter((x) => x.code !== code)));
+  window.dispatchEvent(new Event("my-bookings-changed"));
+}
+
 function CancelBooking({ onCancelled }: { onCancelled: () => void }) {
-  const [busy, setBusy] = useState(false);
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    setBusy(true);
-    const { data: ok, error } = await supabase.rpc("cancel_booking", { _code: String(data.get("code")), _phone: String(data.get("phone")) });
-    setBusy(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<MyBooking | null>(null);
+  const [mine, setMine] = useState<MyBooking[]>([]);
+  useEffect(() => {
+    const sync = () => setMine(loadMyBookings());
+    sync();
+    window.addEventListener("my-bookings-changed", sync);
+    window.addEventListener("storage", sync);
+    return () => { window.removeEventListener("my-bookings-changed", sync); window.removeEventListener("storage", sync); };
+  }, []);
+  const cancel = async (b: MyBooking) => {
+    setBusy(b.code);
+    const { data: ok, error } = await supabase.rpc("cancel_booking_by_code", { _code: b.code });
+    setBusy(null);
+    setConfirming(null);
     if (error) { toast.error("取消失败，请稍后重试"); return; }
-    if (!ok) { toast.error("未找到有效预约，请核对到访凭证与手机号"); return; }
+    if (!ok) { toast.error("该预约已取消或不存在"); removeMyBooking(b.code); return; }
+    removeMyBooking(b.code);
     toast.success("预约已取消，名额已释放");
-    form.reset(); onCancelled();
+    onCancelled();
   };
-  return <form onSubmit={submit} className="space-y-5 border-t border-border pt-8"><SectionHeading eyebrow="Cancel visit" title="取消预约" description="输入到访凭证与预约手机号，取消后名额将自动释放。" /><Field label="到访凭证 *"><input name="code" required placeholder="如 DU-123456" maxLength={20} className={fieldClass} /></Field><Field label="预约手机号 *"><input name="phone" required pattern="1[3-9][0-9]{9}" inputMode="tel" className={fieldClass} /></Field><Button type="submit" variant="outline" disabled={busy} className="w-full">{busy ? "正在取消…" : "取消预约"}</Button></form>;
+  return <div className="space-y-5 border-t border-border pt-8"><SectionHeading eyebrow="My bookings" title="我的预约" description="你在本机提交的预约会显示在这里，可一键取消，取消后名额自动释放。" />{mine.length === 0 ? <p className="rounded-md border border-dashed border-border p-5 text-center text-sm text-muted-foreground">暂无预约记录</p> : <div className="space-y-3">{mine.map((b) => <div key={b.code} className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted p-4"><div className="min-w-0"><p className="truncate text-sm font-bold">{b.date} · {b.slot} · {b.party} 人</p><p className="mt-1 text-xs text-muted-foreground">到访凭证 {b.code}</p></div><Button variant="outline" size="sm" disabled={busy === b.code} onClick={() => setConfirming(b)}>{busy === b.code ? "取消中…" : "取消预约"}</Button></div>)}</div>}{confirming && <div className="fixed inset-0 z-50 grid place-items-center bg-ink/70 p-6" role="dialog" aria-modal="true" aria-label="确认取消预约"><div className="w-full max-w-[340px] rounded-md bg-paper p-6"><h3 className="text-lg font-bold">确定取消这次预约吗？</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{confirming.date} · {confirming.slot} · {confirming.party} 人（凭证 {confirming.code}）。取消后名额将立即释放，此操作不可撤销。</p><div className="mt-6 grid grid-cols-2 gap-3"><Button variant="outline" onClick={() => setConfirming(null)}>再想想</Button><Button variant="destructive" disabled={busy === confirming.code} onClick={() => cancel(confirming)}>{busy === confirming.code ? "取消中…" : "确定取消"}</Button></div></div></div>}</div>;
 }
 function OpenDay() { return <div><SectionHeading eyebrow="Coming next" title="校园开放日" description="活动报名为二期功能。" /><div className="mt-6 overflow-hidden rounded-md border border-border"><img src={campusHero} alt="杜伦大学校园开放日" className="aspect-[16/9] w-full object-cover" /><div className="p-5"><p className="text-xs font-semibold text-primary">活动信息待发布</p><h2 className="mt-2 text-xl font-bold">校园开放日与招生说明会</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">活动名称、时间、地点与亮点将在校方确认后展示。</p><Button className="mt-5 w-full" disabled>报名暂未开放</Button></div></div></div>; }
 

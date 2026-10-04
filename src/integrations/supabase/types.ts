@@ -226,6 +226,7 @@ export type Database = {
         Args: { _code: string; _phone: string }
         Returns: boolean
       }
+      cancel_booking_by_code: { Args: { _code: string }; Returns: boolean }
       search_staff: {
         Args: {
           _departments?: string[]

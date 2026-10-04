@@ -101,12 +101,106 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_profiles: {
+        Row: {
+          biography: string | null
+          biography_hash: string | null
+          biography_zh: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          image_url: string | null
+          is_active: boolean
+          last_error: string | null
+          last_synced_at: string | null
+          orcid_url: string | null
+          other_sections: Json
+          phone: string | null
+          profile_url: string
+          publications: Json
+          research_interests: string[]
+          role: string | null
+          supervision: Json
+          updated_at: string
+        }
+        Insert: {
+          biography?: string | null
+          biography_hash?: string | null
+          biography_zh?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          image_url?: string | null
+          is_active?: boolean
+          last_error?: string | null
+          last_synced_at?: string | null
+          orcid_url?: string | null
+          other_sections?: Json
+          phone?: string | null
+          profile_url: string
+          publications?: Json
+          research_interests?: string[]
+          role?: string | null
+          supervision?: Json
+          updated_at?: string
+        }
+        Update: {
+          biography?: string | null
+          biography_hash?: string | null
+          biography_zh?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          image_url?: string | null
+          is_active?: boolean
+          last_error?: string | null
+          last_synced_at?: string | null
+          orcid_url?: string | null
+          other_sections?: Json
+          phone?: string | null
+          profile_url?: string
+          publications?: Json
+          research_interests?: string[]
+          role?: string | null
+          supervision?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_sync_state: {
+        Row: {
+          id: number
+          last_run_at: string | null
+          last_status: string | null
+          locked_until: string | null
+          paused_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          last_run_at?: string | null
+          last_status?: string | null
+          locked_until?: string | null
+          paused_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          last_run_at?: string | null
+          last_status?: string | null
+          locked_until?: string | null
+          paused_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      acquire_staff_sync_lease: { Args: never; Returns: boolean }
+      verify_staff_sync_token: { Args: { _token: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

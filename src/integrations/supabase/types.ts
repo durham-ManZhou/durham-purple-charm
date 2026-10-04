@@ -222,6 +222,10 @@ export type Database = {
           time_slot: string
         }[]
       }
+      cancel_booking: {
+        Args: { _code: string; _phone: string }
+        Returns: boolean
+      }
       search_staff: {
         Args: {
           _departments?: string[]

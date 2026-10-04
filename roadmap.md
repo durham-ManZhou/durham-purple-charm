@@ -5,4 +5,4 @@
 - [x] Restore the daily launch advertisement and school submodules
 - [x] Restore overseas project categories, cards, details, filters and fixed actions
 - [x] Restore every PRD lead field, school contacts, AI Hub, booking and open-day entry
-- [ ] Verify mobile presentation, interactions and current build
+- [x] Verify mobile presentation, interactions and current build

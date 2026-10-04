@@ -271,7 +271,7 @@ function BookingForm() {
   const [sending, setSending] = useState(false);
   const [date, setDate] = useState("");
   const [slot, setSlot] = useState<string>(TIME_SLOTS[0]);
-  const [party, setParty] = useState(1);
+  const [party, setParty] = useState("");
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loadingCounts, setLoadingCounts] = useState(false);
   const minDate = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
@@ -293,7 +293,8 @@ function BookingForm() {
 
   const remaining = (s: string) => Math.max(0, SLOT_CAPACITY - (counts[s] ?? 0));
   const slotFull = (s: string) => remaining(s) <= 0;
-  const currentFull = slotFull(slot) || remaining(slot) < party;
+  const partyNum = Math.min(10, Math.max(1, Number(party) || 1));
+  const currentFull = slotFull(slot) || remaining(slot) < partyNum;
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

@@ -264,10 +264,54 @@ function LeadForm() {
 function ContactInfo() { return <div><SectionHeading eyebrow="School contact" title="联系学校" /><div className="mt-6 space-y-3"><ContactLine icon={<MapPin />} title="学校地址" detail="The Palatine Centre, Stockton Road, Durham, UK" action="导航" onClick={() => window.open("https://maps.google.com/?q=Durham+University", "_blank")} /><ContactLine icon={<Phone />} title="咨询电话" detail="+44 (0)191 334 2000（杜伦大学总机）" action="拨打" href="tel:+441913342000" /><ContactLine icon={<Mail />} title="咨询邮箱" detail="admissions@durham.ac.uk（示例）" action="发邮件" href="mailto:admissions@durham.ac.uk?subject=%E6%8B%9B%E7%94%9F%E5%92%A8%E8%AF%A2" /><ContactLine icon={<MessageCircle />} title="微信客服" detail="客服会话待微信主体接入" action="咨询" onClick={() => toast("微信客服待正式小程序接入")} /><ContactLine icon={<Clock3 />} title="工作时间" detail="待校方补充" /></div></div>; }
 function AiHub() { return <div><SectionHeading eyebrow="Technical support" title="AI Hub 工作室" description="技术支持 · 商务合作" /><div className="mt-6 rounded-md border border-border bg-muted p-5"><Sparkles className="size-7 text-primary" /><h2 className="mt-4 text-xl font-bold">合作联系方式</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">以下为演示联系方式，正式信息由甲方提供后替换。</p><div className="mt-5 grid gap-2"><Button variant="outline" asChild><a href="tel:+441913342000"><Phone className="size-4" />联系电话：+44 191 334 2000（示例）</a></Button><Button variant="outline" asChild><a href="mailto:aihub@example.com?subject=%E6%8A%80%E6%9C%AF%E6%94%AF%E6%8C%81%20%2F%20%E5%95%86%E5%8A%A1%E5%90%88%E4%BD%9C"><Mail className="size-4" />联系邮箱：aihub@example.com（待补充）</a></Button></div><p className="hidden"></p></div></div>; }
 
+const SLOT_CAPACITY = 100;
+const TIME_SLOTS = ["上午", "下午"] as const;
+
 function BookingForm() {
-  const [sending, setSending] = useState(false); const minDate = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-  const submit = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setSending(true); const form = event.currentTarget; const data = new FormData(form); const code = `DU-${Date.now().toString().slice(-6)}`; const { error } = await supabase.from("bookings").insert({ name: String(data.get("name")), phone: String(data.get("phone")), visit_date: String(data.get("date")), time_slot: String(data.get("slot")), party_size: Number(data.get("party")), notes: String(data.get("notes") || ""), visit_code: code }); setSending(false); if (error) { toast.error("提交失败，请稍后重试"); return; } toast.success(`预约意向已提交，到访凭证：${code}`, { duration: 8000 }); form.reset(); };
-  return <form onSubmit={submit} className="space-y-5"><SectionHeading eyebrow="Campus visit" title="预约到校" description="上午、下午各一档；具体名额与安排以校方确认为准。" /><Field label="姓名 *"><input name="name" required minLength={2} maxLength={20} className={fieldClass} /></Field><Field label="手机号 *"><input name="phone" required pattern="1[3-9][0-9]{9}" inputMode="tel" className={fieldClass} /></Field><div className="grid grid-cols-2 gap-3"><Field label="到访日期 *"><input name="date" type="date" min={minDate} required className={fieldClass} /></Field><Field label="时段 *"><select name="slot" className={fieldClass}><option>上午</option><option>下午</option></select></Field></div><Field label="陪同人数 *"><input name="party" type="number" min={1} max={10} defaultValue={1} required className={fieldClass} /></Field><Field label="备注"><textarea name="notes" maxLength={200} rows={4} className={cn(fieldClass, "py-3")} /></Field><div className="rounded-md border-l-2 border-primary bg-muted p-4 text-xs leading-5 text-muted-foreground">预约提交后将生成到访凭证；正式提醒功能待微信订阅消息接入。</div><Button disabled={sending} className="w-full">{sending ? "正在提交…" : "提交预约"}<CalendarDays className="size-4" /></Button></form>;
+  const [sending, setSending] = useState(false);
+  const [date, setDate] = useState("");
+  const [slot, setSlot] = useState<string>(TIME_SLOTS[0]);
+  const [party, setParty] = useState(1);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [loadingCounts, setLoadingCounts] = useState(false);
+  const minDate = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+
+  useEffect(() => {
+    if (!date) { setCounts({}); return; }
+    let cancelled = false;
+    setLoadingCounts(true);
+    supabase.rpc("booking_slot_counts", { _date: date }).then(({ data, error }) => {
+      if (cancelled) return;
+      setLoadingCounts(false);
+      if (error) { setCounts({}); return; }
+      const map: Record<string, number> = {};
+      for (const row of data ?? []) map[row.time_slot] = Number(row.booked);
+      setCounts(map);
+    });
+    return () => { cancelled = true; };
+  }, [date]);
+
+  const remaining = (s: string) => Math.max(0, SLOT_CAPACITY - (counts[s] ?? 0));
+  const slotFull = (s: string) => remaining(s) <= 0;
+  const currentFull = slotFull(slot) || remaining(slot) < party;
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!date) { toast.error("请选择到访日期"); return; }
+    if (slotFull(slot)) { toast.error(`该时段已约满，请选择其他时段`); return; }
+    if (remaining(slot) < party) { toast.error(`该时段仅剩 ${remaining(slot)} 个名额，请减少陪同人数或更换时段`); return; }
+    setSending(true);
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const code = `DU-${Date.now().toString().slice(-6)}`;
+    const { error } = await supabase.from("bookings").insert({ name: String(data.get("name")), phone: String(data.get("phone")), visit_date: date, time_slot: slot, party_size: party, notes: String(data.get("notes") || ""), visit_code: code });
+    setSending(false);
+    if (error) { toast.error("提交失败，请稍后重试"); return; }
+    toast.success(`预约意向已提交，到访凭证：${code}`, { duration: 8000 });
+    form.reset(); setDate(""); setSlot(TIME_SLOTS[0]); setParty(1); setCounts({});
+  };
+
+  return <form onSubmit={submit} className="space-y-5"><SectionHeading eyebrow="Campus visit" title="预约到校" description="上午、下午各一档，每时段限 100 人，约满即止。" /><Field label="姓名 *"><input name="name" required minLength={2} maxLength={20} className={fieldClass} /></Field><Field label="手机号 *"><input name="phone" required pattern="1[3-9][0-9]{9}" inputMode="tel" className={fieldClass} /></Field><Field label="到访日期 *"><input name="date" type="date" min={minDate} required className={fieldClass} value={date} onChange={(e) => setDate(e.target.value)} /></Field><Field label="时段 *（每时段限 100 人）"><div className="grid grid-cols-2 gap-3">{TIME_SLOTS.map((s) => { const full = date ? slotFull(s) : false; return <button key={s} type="button" disabled={full} onClick={() => setSlot(s)} className={cn("rounded-md border px-3 py-3 text-sm transition-colors", full ? "cursor-not-allowed border-border bg-muted text-muted-foreground/50" : slot === s ? "border-primary bg-primary text-primary-foreground" : "border-border bg-paper text-foreground hover:border-primary/50")}><span className="block font-semibold">{s}</span><span className="mt-1 block text-[11px]">{!date ? "请先选择日期" : loadingCounts ? "查询名额…" : full ? "已约满" : `剩余 ${remaining(s)} 个名额`}</span></button>; })}</div></Field><Field label="陪同人数 *"><input name="party" type="number" min={1} max={10} value={party} onChange={(e) => setParty(Math.max(1, Number(e.target.value) || 1))} required className={fieldClass} /></Field><Field label="备注"><textarea name="notes" maxLength={200} rows={4} className={cn(fieldClass, "py-3")} /></Field><div className="rounded-md border-l-2 border-primary bg-muted p-4 text-xs leading-5 text-muted-foreground">预约提交后将生成到访凭证；正式提醒功能待微信订阅消息接入。</div><Button disabled={sending || (date ? currentFull : false)} className="w-full">{sending ? "正在提交…" : date && slotFull(slot) ? "该时段已约满" : "提交预约"}<CalendarDays className="size-4" /></Button></form>;
 }
 function OpenDay() { return <div><SectionHeading eyebrow="Coming next" title="校园开放日" description="活动报名为二期功能。" /><div className="mt-6 overflow-hidden rounded-md border border-border"><img src={campusHero} alt="杜伦大学校园开放日" className="aspect-[16/9] w-full object-cover" /><div className="p-5"><p className="text-xs font-semibold text-primary">活动信息待发布</p><h2 className="mt-2 text-xl font-bold">校园开放日与招生说明会</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">活动名称、时间、地点与亮点将在校方确认后展示。</p><Button className="mt-5 w-full" disabled>报名暂未开放</Button></div></div></div>; }
 

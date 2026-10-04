@@ -10,3 +10,6 @@
 - [x] Add Durham's official 4-part academic structure and all 27 departments
 - [x] Replace external staff search with an in-app, broad keyword-searchable directory of verified current Durham staff
 - [x] Add a functional campus image carousel with captions and replaceable demo imagery
+- [x] Add carousel autoplay and mobile swipe gestures
+- [x] Expand staff cards with avatars, teaching areas and summaries
+- [x] Replace the staff modal with an in-app detail page and top-left back action

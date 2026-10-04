@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  ArrowLeft, ArrowRight, BookOpen, Building2, CalendarDays, Check, ChevronRight,
+  ArrowLeft, ArrowRight, BookOpen, Building2, CalendarDays, CalendarX2, Check, ChevronRight,
   Clock3, Download, ExternalLink, FileText, GraduationCap, Headphones, Mail, MapPin,
   MessageCircle, Phone, Play, Search, Share2, Sparkles, University, UsersRound, X,
 } from "lucide-react";

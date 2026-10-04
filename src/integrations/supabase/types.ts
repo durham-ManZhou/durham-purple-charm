@@ -182,6 +182,7 @@ export type Database = {
       staff_sync_state: {
         Row: {
           id: number
+          last_discovery_at: string | null
           last_run_at: string | null
           last_status: string | null
           locked_until: string | null
@@ -190,6 +191,7 @@ export type Database = {
         }
         Insert: {
           id?: number
+          last_discovery_at?: string | null
           last_run_at?: string | null
           last_status?: string | null
           locked_until?: string | null
@@ -198,6 +200,7 @@ export type Database = {
         }
         Update: {
           id?: number
+          last_discovery_at?: string | null
           last_run_at?: string | null
           last_status?: string | null
           locked_until?: string | null

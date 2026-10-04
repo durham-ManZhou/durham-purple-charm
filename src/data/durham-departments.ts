@@ -16,7 +16,7 @@ export const departmentSources: DepartmentSource[] = [
   { slug: "english-studies", zh: "英语研究系", en: "English Studies", facultyId: "arts-humanities", sources: [D + "english-studies/about-us/academic-staff/"] },
   { slug: "history", zh: "历史系", en: "History", facultyId: "arts-humanities", sources: [D + "history/about-us/staff/academic-staff/"] },
   { slug: "music", zh: "音乐系", en: "Music", facultyId: "arts-humanities", sources: [D + "music/about-us/people/"] },
-  { slug: "modern-languages-cultures", zh: "现代语言与文化学院", en: "Modern Languages and Cultures", facultyId: "arts-humanities", sources: [D + "modern-languages-cultures/about-us/our-people/meet-our-staff/"] },
+  { slug: "modern-languages-cultures", zh: "现代语言与文化学院", en: "Modern Languages and Cultures", facultyId: "arts-humanities", sources: [D + "modern-languages-cultures/about-us/our-people/"] },
   { slug: "philosophy", zh: "哲学系", en: "Philosophy", facultyId: "arts-humanities", sources: [D + "philosophy/about-us/people/"] },
   { slug: "theology-religion", zh: "神学与宗教系", en: "Theology and Religion", facultyId: "arts-humanities", sources: [D + "theology-religion/about-us/staff/academic-staff/"] },
   { slug: "biosciences", zh: "生物科学系", en: "Biosciences", facultyId: "science", sources: [D + "biosciences/about-us/staff/"] },
@@ -24,7 +24,7 @@ export const departmentSources: DepartmentSource[] = [
   { slug: "computer-science", zh: "计算机科学系", en: "Computer Science", facultyId: "science", sources: [D + "computer-science/about-us/staff/"] },
   { slug: "earth-sciences", zh: "地球科学系", en: "Earth Sciences", facultyId: "science", sources: [D + "earth-sciences/about-us/staff/"] },
   { slug: "engineering", zh: "工程系", en: "Engineering", facultyId: "science", sources: [D + "engineering/about-us/staff/"] },
-  { slug: "mathematical-sciences", zh: "数学科学系", en: "Mathematical Sciences", facultyId: "science", sources: [] },
+  { slug: "mathematical-sciences", zh: "数学科学系", en: "Mathematical Sciences", facultyId: "science", sources: ["https://www.maths.dur.ac.uk/seminars/stlst/ts-academic.html"] },
   {
     slug: "physics", zh: "物理系", en: "Physics", facultyId: "science",
     sources: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((l) => `https://www.physics.dur.ac.uk/stafflist/cmsphone_new.php?sort=${l}`),
@@ -38,7 +38,7 @@ export const departmentSources: DepartmentSource[] = [
   { slug: "school-government-international-affairs", zh: "政府与国际事务学院", en: "Government and International Affairs", facultyId: "social-sciences-health", sources: [D + "school-government-international-affairs/about-us/staff/"] },
   { slug: "sociology", zh: "社会学系", en: "Sociology", facultyId: "social-sciences-health", sources: [D + "sociology/about-us/staff/"] },
   { slug: "sport-exercise-sciences", zh: "运动与锻炼科学系", en: "Sport and Exercise Sciences", facultyId: "social-sciences-health", sources: [D + "sport-exercise-sciences/about-us/people/"] },
-  { slug: "business", zh: "杜伦大学商学院", en: "Durham University Business School", facultyId: "business", sources: [] },
+  { slug: "business", zh: "杜伦大学商学院", en: "Durham University Business School", facultyId: "business", sources: ["/business/about/departments/accounting/our-people/academic-staff/", "/business/about/departments/economics/our-people/academic-staff/", "/business/about/departments/finance/our-people/academic-staff---research/", "/business/about/departments/finance/our-people/academic-staff---education/", "/business/about/departments/management-and-marketing/our-people/academic-staff-/", "/business/about/departments/management-and-marketing/our-people/academic-management-team/"] },
 ];
 
 export const departmentBySlug = new Map(departmentSources.map((d) => [d.slug, d]));

@@ -14,7 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          party_size: number
+          phone: string
+          status: string
+          time_slot: string
+          updated_at: string
+          visit_code: string
+          visit_date: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          party_size: number
+          phone: string
+          status?: string
+          time_slot: string
+          updated_at?: string
+          visit_code: string
+          visit_date: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          party_size?: number
+          phone?: string
+          status?: string
+          time_slot?: string
+          updated_at?: string
+          visit_code?: string
+          visit_date?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          budget: string | null
+          created_at: string
+          education: string
+          entry_year: string | null
+          follow_up_status: string
+          id: string
+          intended_countries: string[]
+          intended_program: string
+          name: string
+          notes: string | null
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: string | null
+          created_at?: string
+          education: string
+          entry_year?: string | null
+          follow_up_status?: string
+          id?: string
+          intended_countries?: string[]
+          intended_program: string
+          name: string
+          notes?: string | null
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: string | null
+          created_at?: string
+          education?: string
+          entry_year?: string | null
+          follow_up_status?: string
+          id?: string
+          intended_countries?: string[]
+          intended_program?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

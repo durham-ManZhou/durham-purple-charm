@@ -19,51 +19,93 @@ export type LiveStaff = {
   last_synced_at: string | null;
 };
 
-let cache: Map<string, LiveStaff> | null = null;
-let pending: Promise<Map<string, LiveStaff>> | null = null;
+import { durhamStaff, type StaffProfile } from "@/data/durham-staff";
+import { departmentBySlug, departmentsForFaculty } from "@/data/durham-departments";
 
-function load() {
-  if (!pending)
-    pending = Promise.resolve(
-      supabase
-        .from("staff_profiles")
-        .select(
-          "profile_url, display_name, role, phone, email, orcid_url, biography, biography_zh, research_interests, publications, supervision, other_sections, is_active, last_synced_at",
-        ),
-    ).then(({ data }) => {
-      cache = new Map(((data ?? []) as unknown as LiveStaff[]).map((r) => [r.profile_url, r]));
-      return cache;
-    });
-  return pending;
+const seedByUrl = new Map(durhamStaff.map((s) => [s.profileUrl, s]));
+
+const ROLE_ZH: [RegExp, string][] = [
+  [/head of (department|school)/i, "系主任"],
+  [/associate professor/i, "副教授"],
+  [/assistant professor/i, "助理教授"],
+  [/professor/i, "教授"],
+  [/senior lecturer/i, "高级讲师"],
+  [/lecturer/i, "讲师"],
+  [/teaching fellow/i, "教学研究员"],
+  [/reader/i, "高级讲师（Reader）"],
+];
+export function roleZh(role: string | null | undefined) {
+  if (!role) return "";
+  const hits = ROLE_ZH.filter(([re]) => re.test(role)).map(([, zh]) => zh);
+  const uniq = [...new Set(hits)].filter((z, i, a) => !(z === "教授" && a.some((x) => x.includes("教授") && x !== "教授")));
+  return uniq.length ? uniq.join("、") : role;
 }
 
-export function useLiveStaff() {
-  const [map, setMap] = useState<Map<string, LiveStaff>>(cache ?? new Map());
+type SearchRow = {
+  profile_url: string; display_name: string | null; role: string | null; listed_role: string | null;
+  department_slug: string | null; image_url: string | null; research_interests: string[] | null;
+  biography_zh: string | null; biography: string | null; total: number;
+};
+
+function toProfile(r: SearchRow): StaffProfile & { summary: string } {
+  const seed = seedByUrl.get(r.profile_url);
+  const dept = r.department_slug ? departmentBySlug.get(r.department_slug) : undefined;
+  const role = r.listed_role || r.role || "";
+  const summary = (r.biography_zh || r.biography || "").split(/(?<=[。.!?])\s*/)[0] ?? "";
+  if (seed) return { ...seed, summary: summary || `${seed.departmentZh}教师，主要关注${seed.interestsZh.slice(0, 3).join("、")}等领域。` };
+  const interests = r.research_interests ?? [];
+  return {
+    name: (r.display_name ?? "").replace(/^(Professor|Prof|Dr|Mr|Mrs|Ms|Miss|Mx)\.?\s+/, ""),
+    title: role, titleZh: roleZh(role),
+    facultyId: dept?.facultyId ?? "science",
+    faculty: "", department: dept?.en ?? "", departmentZh: dept?.zh ?? "",
+    interests, interestsZh: interests,
+    profileUrl: r.profile_url,
+    ...(r.image_url ? { imageUrl: r.image_url } : {}),
+    summary,
+  };
+}
+
+export type StaffCard = ReturnType<typeof toProfile>;
+const PAGE = 40;
+
+export function useStaffSearch(query: string, facultyId: string) {
+  const [items, setItems] = useState<StaffCard[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [q, setQ] = useState(query);
+  useEffect(() => { const t = setTimeout(() => setQ(query), 300); return () => clearTimeout(t); }, [query]);
+  useEffect(() => { setPage(0); }, [q, facultyId]);
   useEffect(() => {
     let alive = true;
-    load().then((m) => alive && setMap(m));
-    return () => {
-      alive = false;
-    };
-  }, []);
-  return map;
+    setLoading(true);
+    const depts = facultyId === "all" ? null : departmentsForFaculty(facultyId);
+    supabase.rpc("search_staff", { _q: q, _departments: depts as string[], _limit: PAGE, _offset: page * PAGE })
+      .then(({ data }) => {
+        if (!alive) return;
+        const rows = (data ?? []) as SearchRow[];
+        const mapped = rows.map(toProfile);
+        setItems((prev) => (page === 0 ? mapped : [...prev, ...mapped]));
+        setTotal(rows[0]?.total ?? (page === 0 ? 0 : total));
+        setLoading(false);
+      });
+    return () => { alive = false; };
+  }, [q, facultyId, page]);
+  return { items, total, loading, loadMore: () => setPage((p) => p + 1), hasMore: items.length < total };
 }
 
-/** Text searched for any keyword: biography, publications, sections, etc. */
-export function liveSearchText(s?: LiveStaff) {
-  if (!s) return "";
-  return [
-    s.display_name,
-    s.role,
-    s.biography,
-    s.biography_zh,
-    ...s.research_interests,
-    ...s.publications.map((p) => `${p.title} ${p.citation}`),
-    ...s.supervision.map((p) => p.name),
-    ...s.other_sections.map((p) => `${p.heading} ${p.text}`),
-  ]
-    .filter(Boolean)
-    .join(" ");
+export function useStaffDetail(url: string) {
+  const [row, setRow] = useState<LiveStaff | undefined>();
+  useEffect(() => {
+    let alive = true;
+    supabase.from("staff_profiles")
+      .select("profile_url, display_name, role, phone, email, orcid_url, biography, biography_zh, research_interests, publications, supervision, other_sections, is_active, last_synced_at")
+      .eq("profile_url", url).maybeSingle()
+      .then(({ data }) => { if (alive) setRow((data ?? undefined) as unknown as LiveStaff | undefined); });
+    return () => { alive = false; };
+  }, [url]);
+  return row;
 }
 
 function Fold({ title, count, children, open = false }: { title: string; count?: number; children: ReactNode; open?: boolean }) {
@@ -107,7 +149,7 @@ function Publications({ items }: { items: LiveStaff["publications"] }) {
   );
 }
 
-export function LiveProfileSections({ live }: { live?: LiveStaff }) {
+export function LiveProfileSections({ live }: { live: LiveStaff | undefined }) {
   if (!live || !live.last_synced_at) return null;
   return (
     <section className="mt-8 border-t border-border">

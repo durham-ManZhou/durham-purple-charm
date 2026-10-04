@@ -129,3 +129,51 @@ export async function translateBio(text: string, apiKey: string): Promise<string
   const t = json.output?.flatMap((o) => o.content ?? []).find((c) => c.type === "output_text")?.text;
   return t?.trim() || null;
 }
+
+const STAFF_RE = /^(?:https:\/\/www\.durham\.ac\.uk)?\/(staff|business\/our-people)\/([a-z0-9.-]+)\/?$/;
+const NOT_PEOPLE = /^(advisory-board|mba-advisory-board|professors-in-practice)$/;
+const ACADEMIC_ROLE = /professor|lecturer|reader|head of department|teaching fellow|director of|teaching/i;
+const NON_ACADEMIC = /emerit|honorary|visiting|pgr|student|postgrad|phd|administrat|technic|manager|officer|secretary|finance|assistant to|support|coordinator|clerk|research associate|postdoc|research fellow/i;
+const SECTION_SKIP = /research student|postgrad|pgr|phd|professional|admin|technical|technician|support|emerit|honorary|visit|associated|research staff|research track staff|contact/i;
+
+export type ListedStaff = { profile_url: string; name: string; role: string | null };
+
+/** Parse an official department staff list; keep academic (teaching) staff only. */
+export function parseStaffList(html: string): ListedStaff[] {
+  const root = parse(html);
+  const main = root.querySelector("main") ?? root;
+  const out = new Map<string, ListedStaff>();
+  let section = "";
+  const walk = (el: HTMLElement) => {
+    for (const n of el.childNodes as HTMLElement[]) {
+      if (!n.tagName) continue;
+      if (/^H[1-4]$/.test(n.tagName)) section = clean(n.text);
+      if (n.tagName === "A") {
+        const m = STAFF_RE.exec((n.getAttribute("href") ?? "").trim());
+        if (m && !NOT_PEOPLE.test(m[2]!)) {
+          const row = n.closest("tr");
+          const cells = row?.querySelectorAll("td") ?? [];
+          const role = cells.length > 1 ? clean(cells[1]!.text) || null : null;
+          const academicSection = /academic|teaching|education|lecturer|professor/i.test(section);
+          let keep: boolean;
+          if (role) keep = ACADEMIC_ROLE.test(role) && !NON_ACADEMIC.test(role) && !(SECTION_SKIP.test(section) && !academicSection);
+          else keep = !SECTION_SKIP.test(section) || academicSection;
+          if (keep) {
+            const url = `https://www.durham.ac.uk/${m[1]}/${m[2]}/`;
+            const name = clean(n.text).replace(/^Visit\s+/i, "").replace(/['’]s staff profile$/i, "");
+            out.set(url, { profile_url: url, name, role });
+          }
+        }
+        continue;
+      }
+      walk(n);
+    }
+  };
+  walk(main);
+  return [...out.values()].filter((s) => s.name.length > 2);
+}
+
+export async function fetchHtml(url: string) {
+  const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "text/html" }, redirect: "follow" });
+  return res.ok ? res.text() : null;
+}

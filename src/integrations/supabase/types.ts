@@ -107,12 +107,15 @@ export type Database = {
           biography_hash: string | null
           biography_zh: string | null
           created_at: string
+          department_slug: string | null
           display_name: string | null
           email: string | null
           image_url: string | null
           is_active: boolean
           last_error: string | null
+          last_seen_at: string | null
           last_synced_at: string | null
+          listed_role: string | null
           orcid_url: string | null
           other_sections: Json
           phone: string | null
@@ -120,6 +123,7 @@ export type Database = {
           publications: Json
           research_interests: string[]
           role: string | null
+          search_text: string
           supervision: Json
           updated_at: string
         }
@@ -128,12 +132,15 @@ export type Database = {
           biography_hash?: string | null
           biography_zh?: string | null
           created_at?: string
+          department_slug?: string | null
           display_name?: string | null
           email?: string | null
           image_url?: string | null
           is_active?: boolean
           last_error?: string | null
+          last_seen_at?: string | null
           last_synced_at?: string | null
+          listed_role?: string | null
           orcid_url?: string | null
           other_sections?: Json
           phone?: string | null
@@ -141,6 +148,7 @@ export type Database = {
           publications?: Json
           research_interests?: string[]
           role?: string | null
+          search_text?: string
           supervision?: Json
           updated_at?: string
         }
@@ -149,12 +157,15 @@ export type Database = {
           biography_hash?: string | null
           biography_zh?: string | null
           created_at?: string
+          department_slug?: string | null
           display_name?: string | null
           email?: string | null
           image_url?: string | null
           is_active?: boolean
           last_error?: string | null
+          last_seen_at?: string | null
           last_synced_at?: string | null
+          listed_role?: string | null
           orcid_url?: string | null
           other_sections?: Json
           phone?: string | null
@@ -162,6 +173,7 @@ export type Database = {
           publications?: Json
           research_interests?: string[]
           role?: string | null
+          search_text?: string
           supervision?: Json
           updated_at?: string
         }
@@ -170,6 +182,7 @@ export type Database = {
       staff_sync_state: {
         Row: {
           id: number
+          last_discovery_at: string | null
           last_run_at: string | null
           last_status: string | null
           locked_until: string | null
@@ -178,6 +191,7 @@ export type Database = {
         }
         Insert: {
           id?: number
+          last_discovery_at?: string | null
           last_run_at?: string | null
           last_status?: string | null
           locked_until?: string | null
@@ -186,6 +200,7 @@ export type Database = {
         }
         Update: {
           id?: number
+          last_discovery_at?: string | null
           last_run_at?: string | null
           last_status?: string | null
           locked_until?: string | null
@@ -200,6 +215,26 @@ export type Database = {
     }
     Functions: {
       acquire_staff_sync_lease: { Args: never; Returns: boolean }
+      search_staff: {
+        Args: {
+          _departments?: string[]
+          _limit?: number
+          _offset?: number
+          _q?: string
+        }
+        Returns: {
+          biography: string
+          biography_zh: string
+          department_slug: string
+          display_name: string
+          image_url: string
+          listed_role: string
+          profile_url: string
+          research_interests: string[]
+          role: string
+          total: number
+        }[]
+      }
       verify_staff_sync_token: { Args: { _token: string }; Returns: boolean }
     }
     Enums: {

@@ -1,0 +1,1 @@
+ALTER TABLE public.staff_sync_state ADD COLUMN last_discovery_at timestamptz;

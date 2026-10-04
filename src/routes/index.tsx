@@ -151,7 +151,7 @@ function AdmissionsApp() {
   </div>;
 }
 
-function TopBar() { return <header className="sticky top-0 z-20 flex h-[68px] items-center justify-between border-b border-border bg-paper/95 px-4 backdrop-blur"><img src={logoDark.url} alt="Durham University 官方标志" className="h-10 w-auto max-w-[210px] object-contain object-left" /><span className="text-xs font-semibold text-muted-foreground">招生小程序</span></header>; }
+function TopBar() { return <header className="sticky top-0 z-20 flex h-[68px] items-center border-b border-border bg-paper/95 px-4 backdrop-blur"><img src={logoDark.url} alt="Durham University 官方标志" className="h-10 w-auto max-w-[210px] object-contain object-left" /></header>; }
 
 function School({ view, onView, onOverseas, onContact }: { view: SchoolView; onView: (view: SchoolView) => void; onOverseas: () => void; onContact: () => void }) {
   if (view !== "index") return <SchoolDetail view={view} onBack={() => onView("index")} />;

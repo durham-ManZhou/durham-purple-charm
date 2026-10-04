@@ -106,9 +106,10 @@ export const Route = createFileRoute("/api/public/hooks/sync-staff")({
                   }
                 }
               }
+              const { display_name, ...rest } = p;
               await db.from("staff_profiles").update({
-                ...p,
-                display_name: p.display_name ?? undefined,
+                ...rest,
+                ...(display_name ? { display_name } : {}),
                 biography_hash: biography_zh ? hash : null,
                 biography_zh,
                 last_synced_at: now,

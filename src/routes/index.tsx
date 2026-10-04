@@ -32,6 +32,69 @@ type MainTab = "school" | "overseas" | "contact";
 type SchoolView = "index" | "about" | "faculty" | "campus" | "interviews";
 type ProjectType = "国际本科" | "硕士项目" | "本科直博";
 type Project = { id: number; type: ProjectType; name: string; partner: string; country: string; mode: string; subject: string; highlight: string; image: string };
+type FacultyGroup = { id: string; name: string; english: string; description: string; departments: { name: string; english: string }[] };
+
+const facultyGroups: FacultyGroup[] = [
+  {
+    id: "arts-humanities",
+    name: "人文与艺术学部",
+    english: "Faculty of Arts and Humanities",
+    description: "由六个系与一个学院组成，涵盖人文思想、语言、历史与创意实践。",
+    departments: [
+      { name: "古典学与古代史系", english: "Classics and Ancient History" },
+      { name: "英语研究系", english: "English Studies" },
+      { name: "历史系", english: "History" },
+      { name: "音乐系", english: "Music" },
+      { name: "现代语言与文化学院", english: "School of Modern Languages and Cultures" },
+      { name: "哲学系", english: "Philosophy" },
+      { name: "神学与宗教系", english: "Theology and Religion" },
+    ],
+  },
+  {
+    id: "science",
+    name: "科学学部",
+    english: "Faculty of Science",
+    description: "八个学术系共同开展基础科学、工程技术与心理学教学研究。",
+    departments: [
+      { name: "生物科学系", english: "Biosciences" },
+      { name: "化学系", english: "Chemistry" },
+      { name: "计算机科学系", english: "Computer Science" },
+      { name: "地球科学系", english: "Earth Sciences" },
+      { name: "工程系", english: "Engineering" },
+      { name: "数学科学系", english: "Mathematical Sciences" },
+      { name: "物理系", english: "Physics" },
+      { name: "心理学系", english: "Psychology" },
+    ],
+  },
+  {
+    id: "social-sciences-health",
+    name: "社会科学与健康学部",
+    english: "Faculty of Social Sciences and Health",
+    description: "由社会科学领域的六个系与两个学院组成，重视公共议题与社会影响。",
+    departments: [
+      { name: "人类学系", english: "Anthropology" },
+      { name: "考古学系", english: "Archaeology" },
+      { name: "教育学院", english: "School of Education" },
+      { name: "地理系", english: "Geography" },
+      { name: "政府与国际事务学院", english: "School of Government and International Affairs" },
+      { name: "杜伦法学院", english: "Durham Law School" },
+      { name: "社会学系", english: "Sociology" },
+      { name: "体育与运动科学系", english: "Sport and Exercise Sciences" },
+    ],
+  },
+  {
+    id: "business",
+    name: "杜伦大学商学院",
+    english: "Durham University Business School",
+    description: "独立的学部级商学院，下设会计、经济、金融与管理及市场营销四个系。",
+    departments: [
+      { name: "会计系", english: "Accounting" },
+      { name: "经济系", english: "Economics" },
+      { name: "金融系", english: "Finance" },
+      { name: "管理与市场营销系", english: "Management and Marketing" },
+    ],
+  },
+];
 
 const projects: Project[] = [
   { id: 1, type: "国际本科", name: "杜伦大学国际本科衔接项目", partner: "Durham University", country: "英国", mode: "衔接课程", subject: "商科方向", highlight: "英伦名校 · 商科方向", image: studentsStudy },
@@ -41,6 +104,7 @@ const projects: Project[] = [
 ];
 
 const fieldClass = "min-h-12 w-full rounded-md border border-input bg-paper px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
+const scrollToAppTop = () => window.scrollTo({ top: 0, behavior: "instant" });
 
 function AdmissionsApp() {
   const [tab, setTab] = useState<MainTab>("school");
@@ -53,14 +117,15 @@ function AdmissionsApp() {
     if (!localStorage.getItem(key)) setAdOpen(true);
   }, []);
   const closeAd = () => { localStorage.setItem(`durham-ad-${new Date().toISOString().slice(0, 10)}`, "seen"); setAdOpen(false); };
-  const changeTab = (next: MainTab) => { setTab(next); setSchoolView("index"); setDetailId(null); window.scrollTo({ top: 0, behavior: "smooth" }); };
-  const openProject = (id: number) => { setTab("overseas"); setDetailId(id); setAdOpen(false); window.scrollTo({ top: 0 }); };
+  const changeTab = (next: MainTab) => { setTab(next); setSchoolView("index"); setDetailId(null); requestAnimationFrame(scrollToAppTop); };
+  const changeSchoolView = (next: SchoolView) => { setSchoolView(next); requestAnimationFrame(scrollToAppTop); };
+  const openProject = (id: number) => { setTab("overseas"); setDetailId(id); setAdOpen(false); requestAnimationFrame(scrollToAppTop); };
   return <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto min-h-screen max-w-[520px] bg-paper shadow-xl">
       <TopBar />
       <main className="pb-24">
-        {tab === "school" && <School view={schoolView} onView={setSchoolView} onOverseas={() => changeTab("overseas")} onContact={() => changeTab("contact")} />}
-        {tab === "overseas" && (detailId ? <ProjectDetail project={projects.find((item) => item.id === detailId)} onBack={() => setDetailId(null)} onConsult={() => setConsultOpen(true)} /> : <Overseas onDetail={setDetailId} onConsult={() => setConsultOpen(true)} />)}
+        {tab === "school" && <School view={schoolView} onView={changeSchoolView} onOverseas={() => changeTab("overseas")} onContact={() => changeTab("contact")} />}
+        {tab === "overseas" && (detailId ? <ProjectDetail project={projects.find((item) => item.id === detailId)} onBack={() => { setDetailId(null); requestAnimationFrame(scrollToAppTop); }} onConsult={() => setConsultOpen(true)} /> : <Overseas onDetail={openProject} onConsult={() => setConsultOpen(true)} />)}
         {tab === "contact" && <Contact />}
       </main>
       <Button aria-label="微信客服" title="微信客服" size="icon" onClick={() => setConsultOpen(true)} className="fixed bottom-22 right-[max(1rem,calc(50%-244px))] z-30 rounded-full shadow-lg"><Headphones className="size-5" /></Button>
@@ -93,17 +158,38 @@ function School({ view, onView, onOverseas, onContact }: { view: SchoolView; onV
 function SchoolDetail({ view, onBack }: { view: Exclude<SchoolView, "index">; onBack: () => void }) {
   const data = {
     about: { title: "学校介绍", image: campusHero, body: "杜伦大学创立于 1832 年，是一所位于英国历史名城杜伦的学院制大学。学校将研究与教学融入紧密的学院社区。办学历史、荣誉与资质请以学校官网最新信息为准。" },
-    faculty: { title: "师资力量", image: studentsStudy, body: "杜伦大学的教学与研究由不同院系的学者共同推动。正式师资头像、姓名、职称、主讲方向与个人简介待校方资料接入。" },
+    faculty: { title: "师资力量", image: studentsStudy, body: "杜伦大学现有四个学部级学术分类、共 27 个院系。你可以按学部浏览院系，并通过学校官网实时教师目录查看姓名、职称、研究方向与完整个人介绍。" },
     campus: { title: "校园环境", image: campusHero, body: "历史建筑、河畔景观与现代学习空间共同构成杜伦独特的学习环境。更多校园图集与图片说明待校方素材接入。" },
     interviews: { title: "学生访谈", image: studentPortrait, body: "学生访谈将展示学生姓名、录取院校与真实感言，并支持文章和视频内容。正式访谈素材待校方提供。" },
   }[view];
-  return <article className="animate-rise"><div className="relative h-72"><img src={data.image} alt={data.title} className="size-full object-cover" /><Button size="icon" variant="secondary" onClick={onBack} aria-label="返回" className="absolute left-4 top-4"><ArrowLeft className="size-5" /></Button></div><div className="px-5 py-8"><p className="text-xs font-bold uppercase text-primary">About Durham</p><h1 className="mt-2 text-3xl font-bold">{data.title}</h1><p className="mt-5 text-sm leading-8 text-muted-foreground">{data.body}</p>{view === "faculty" && <div className="mt-7 space-y-3">{["人文与艺术学部", "科学学部", "社会科学与健康学部"].map((item) => <div key={item} className="flex items-center gap-3 rounded-md border border-border p-4"><UsersRound className="size-5 text-primary" /><span className="font-semibold">{item}</span></div>)}</div>}{view === "interviews" && <div className="mt-7 rounded-md border border-border p-5"><p className="text-xs text-primary">学生故事</p><h2 className="mt-2 text-xl font-bold">在学院社区中找到归属</h2><p className="mt-2 text-sm text-muted-foreground">正式姓名、录取信息与视频待发布。</p></div>}</div></article>;
+  return <article className="animate-rise"><div className="relative h-72"><img src={data.image} alt={data.title} className="size-full object-cover" /><Button size="icon" variant="secondary" onClick={onBack} aria-label="返回" className="absolute left-4 top-4 shadow-md"><ArrowLeft className="size-5" /></Button></div><div className="px-5 py-8"><p className="text-xs font-bold uppercase text-primary">About Durham</p><h1 className="mt-2 text-3xl font-bold">{data.title}</h1><p className="mt-5 text-sm leading-8 text-muted-foreground">{data.body}</p>{view === "faculty" && <FacultyDirectory />}{view === "interviews" && <div className="mt-7 rounded-md border border-border p-5"><p className="text-xs text-primary">学生故事</p><h2 className="mt-2 text-xl font-bold">在学院社区中找到归属</h2><p className="mt-2 text-sm text-muted-foreground">正式姓名、录取信息与视频待发布。</p></div>}</div></article>;
+}
+
+function FacultyDirectory() {
+  const [facultyId, setFacultyId] = useState("arts-humanities");
+  const [staffQuery, setStaffQuery] = useState("");
+  const activeFaculty = facultyGroups.find((faculty) => faculty.id === facultyId);
+  if (!activeFaculty) return null;
+  const openStaffDirectory = (query: string) => {
+    const url = new URL("https://www.durham.ac.uk/search/");
+    url.searchParams.set("searchStudioQuery", query || "*");
+    url.searchParams.set("isGrid", "false");
+    url.searchParams.set("facets", 'fq=sectiontype_ss:"staff"');
+    url.searchParams.set("start", "0");
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
+  };
+  return <div className="mt-8">
+    <div className="border-y border-border py-5"><div className="grid grid-cols-2 gap-3"><div><strong className="block text-2xl text-primary">4</strong><span className="text-xs text-muted-foreground">学部级分类</span></div><div><strong className="block text-2xl text-primary">27</strong><span className="text-xs text-muted-foreground">院系与学院</span></div></div></div>
+    <section className="mt-7" aria-labelledby="faculty-heading"><h2 id="faculty-heading" className="text-xl font-bold">按学部浏览</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">Browse by faculty</p><div className="mt-4 grid grid-cols-2 gap-2">{facultyGroups.map((faculty) => <Button key={faculty.id} variant={faculty.id === activeFaculty.id ? "default" : "outline"} onClick={() => setFacultyId(faculty.id)} className="h-auto min-h-16 justify-start whitespace-normal px-3 py-3 text-left text-xs leading-5">{faculty.name}</Button>)}</div></section>
+    <section className="mt-7"><p className="text-xs font-bold uppercase text-primary">{activeFaculty.english}</p><h2 className="mt-2 text-2xl font-bold">{activeFaculty.name}</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">{activeFaculty.description}</p><div className="mt-5 divide-y divide-border border-y border-border">{activeFaculty.departments.map((department) => <div key={department.english} className="flex items-center gap-3 py-4"><span className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-xs font-bold text-primary">{String(activeFaculty.departments.indexOf(department) + 1).padStart(2, "0")}</span><div className="min-w-0 flex-1"><h3 className="text-sm font-bold">{department.name}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{department.english}</p></div><Button variant="ghost" size="icon" aria-label={`查看${department.name}教师`} onClick={() => openStaffDirectory(department.english)}><ExternalLink className="size-4" /></Button></div>)}</div></section>
+    <section className="mt-8 rounded-md bg-primary p-5 text-primary-foreground"><p className="text-xs font-bold uppercase text-accent">Live staff profiles</p><h2 className="mt-2 text-xl font-bold">查找教师官方 Profile</h2><p className="mt-2 text-xs leading-5 text-primary-foreground/80">输入英文姓名或研究领域，结果来自杜伦大学官网实时目录；完整职称、简介与研究成果以官网为准。</p><label className="relative mt-5 block"><Search className="absolute left-3 top-4 size-4 text-muted-foreground" /><input aria-label="输入教师姓名或研究领域" value={staffQuery} onChange={(event) => setStaffQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openStaffDirectory(staffQuery); }} className={cn(fieldClass, "pl-9")} placeholder="Name or research area" /></label><Button variant="gold" className="mt-3 w-full" onClick={() => openStaffDirectory(staffQuery)}>在官网查看实时资料 <ExternalLink className="size-4" /></Button><p className="mt-3 text-[11px] leading-5 text-primary-foreground/65">教师资料持续更新，不在小程序内复制或保存个人照片与联系方式。</p></section>
+  </div>;
 }
 
 function Overseas({ onDetail, onConsult }: { onDetail: (id: number) => void; onConsult: () => void }) {
   const [type, setType] = useState<ProjectType>("国际本科"); const [query, setQuery] = useState(""); const [country, setCountry] = useState("全部国家");
   const shown = useMemo(() => projects.filter((item) => item.type === type && (country === "全部国家" || item.country === country) && `${item.name}${item.partner}${item.subject}`.includes(query)), [type, query, country]);
-  return <div className="animate-rise"><PageIntro eyebrow="Overseas study" title="海外留学" text="浏览国际本科、硕士项目与本科直博项目。" /><div className="sticky top-[68px] z-10 border-b border-border bg-paper"><div className="grid grid-cols-3">{(["国际本科", "硕士项目", "本科直博"] as ProjectType[]).map((item) => <Button key={item} variant="ghost" onClick={() => setType(item)} className={cn("rounded-none border-b-2 px-2 text-xs", item === type ? "border-primary text-primary" : "border-transparent text-muted-foreground")}>{item}</Button>)}</div></div><section className="px-4 py-6"><div className="grid grid-cols-[1fr_120px] gap-2"><label className="relative"><Search className="absolute left-3 top-4 size-4 text-muted-foreground" /><input aria-label="搜索项目" value={query} onChange={(event) => setQuery(event.target.value)} className={cn(fieldClass, "pl-9")} placeholder="搜索项目" /></label><select aria-label="筛选国家" value={country} onChange={(event) => setCountry(event.target.value)} className={fieldClass}><option>全部国家</option><option>英国</option></select></div><div className="mt-5 space-y-5">{shown.map((project) => <ProjectCard key={project.id} project={project} onDetail={() => onDetail(project.id)} onConsult={onConsult} />)}</div>{shown.length === 0 && <p className="py-14 text-center text-sm text-muted-foreground">没有找到匹配项目</p>}</section></div>;
+  return <div className="animate-rise"><PageIntro eyebrow="Overseas study" title="海外留学" text="浏览国际本科、硕士项目与本科直博项目。" /><div className="sticky top-[68px] z-10 border-b border-border bg-paper"><div className="grid grid-cols-3">{(["国际本科", "硕士项目", "本科直博"] as ProjectType[]).map((item) => <Button key={item} variant="ghost" onClick={() => { setType(item); requestAnimationFrame(scrollToAppTop); }} className={cn("rounded-none border-b-2 px-2 text-xs", item === type ? "border-primary text-primary" : "border-transparent text-muted-foreground")}>{item}</Button>)}</div></div><section className="px-4 py-6"><div className="grid grid-cols-[1fr_120px] gap-2"><label className="relative"><Search className="absolute left-3 top-4 size-4 text-muted-foreground" /><input aria-label="搜索项目" value={query} onChange={(event) => setQuery(event.target.value)} className={cn(fieldClass, "pl-9")} placeholder="搜索项目" /></label><select aria-label="筛选国家" value={country} onChange={(event) => setCountry(event.target.value)} className={fieldClass}><option>全部国家</option><option>英国</option></select></div><div className="mt-5 space-y-5">{shown.map((project) => <ProjectCard key={project.id} project={project} onDetail={() => onDetail(project.id)} onConsult={onConsult} />)}</div>{shown.length === 0 && <p className="py-14 text-center text-sm text-muted-foreground">没有找到匹配项目</p>}</section></div>;
 }
 
 function ProjectCard({ project, onDetail, onConsult }: { project: Project; onDetail: () => void; onConsult: () => void }) { return <article className="grid grid-cols-[128px_1fr] overflow-hidden rounded-md border border-border bg-paper shadow-sm"><img src={project.image} alt={project.name} className="h-full min-h-52 w-full object-cover" /><div className="min-w-0 p-4"><div className="flex items-center gap-2"><img src={logoDark.url} alt="Durham University 合作院校标志" className="h-6 w-auto max-w-24 object-contain object-left" /><span className="sr-only">{project.partner}</span></div><h2 className="mt-2 text-lg font-bold leading-snug">{project.name}</h2><div className="mt-3 flex flex-wrap gap-1.5"><Tag>{project.country}</Tag><Tag>{project.mode}</Tag><Tag>{project.subject}</Tag></div><p className="mt-3 text-xs font-semibold text-muted-foreground">{project.highlight}</p><div className="mt-4 grid grid-cols-2 gap-2"><Button size="sm" variant="outline" onClick={onDetail}>项目详情</Button><Button size="sm" onClick={onConsult}>直接咨询</Button></div></div></article>; }
@@ -116,7 +202,7 @@ function ProjectDetail({ project, onBack, onConsult }: { project: Project | unde
 function Contact() {
   const [mode, setMode] = useState<"lead" | "info" | "studio" | "booking" | "event">("lead");
   const options = [{ id: "lead" as const, label: "意向填写", icon: FileText }, { id: "info" as const, label: "联系我们", icon: Phone }, { id: "studio" as const, label: "AI Hub", icon: Sparkles }, { id: "booking" as const, label: "预约到校", icon: CalendarDays }, { id: "event" as const, label: "开放日", icon: UsersRound }];
-  return <div className="animate-rise"><PageIntro eyebrow="Contact us" title="联系我们" text="提交升学意向、联系学校或预约到校。" /><div className="overflow-x-auto border-b border-border bg-paper px-2"><div className="flex min-w-max">{options.map(({ id, label, icon: Icon }) => <Button key={id} variant="ghost" onClick={() => setMode(id)} className={cn("h-16 min-h-16 flex-col rounded-none border-b-2 px-4 text-[11px]", mode === id ? "border-primary text-primary" : "border-transparent text-muted-foreground")}><Icon className="size-4" />{label}</Button>)}</div></div><section className="px-4 py-7">{mode === "lead" && <LeadForm />}{mode === "info" && <ContactInfo />}{mode === "studio" && <AiHub />}{mode === "booking" && <BookingForm />}{mode === "event" && <OpenDay />}</section></div>;
+  return <div className="animate-rise"><PageIntro eyebrow="Contact us" title="联系我们" text="提交升学意向、联系学校或预约到校。" /><div className="overflow-x-auto border-b border-border bg-paper px-2"><div className="flex min-w-max">{options.map(({ id, label, icon: Icon }) => <Button key={id} variant="ghost" onClick={() => { setMode(id); requestAnimationFrame(scrollToAppTop); }} className={cn("h-16 min-h-16 flex-col rounded-none border-b-2 px-4 text-[11px]", mode === id ? "border-primary text-primary" : "border-transparent text-muted-foreground")}><Icon className="size-4" />{label}</Button>)}</div></div><section className="px-4 py-7">{mode === "lead" && <LeadForm />}{mode === "info" && <ContactInfo />}{mode === "studio" && <AiHub />}{mode === "booking" && <BookingForm />}{mode === "event" && <OpenDay />}</section></div>;
 }
 
 function LeadForm() {

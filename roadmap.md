@@ -16,3 +16,4 @@
 - [x] Add article and playable-video student interview lists with in-app detail pages
 - [x] Align all three overseas categories to the required shared project-card fields and 3:4 cover format
 - [x] Group student interview articles and videos by student, showing only available media
+- [ ] Add verified official profile photos to staff list and detail views, with safe fallbacks

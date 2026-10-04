@@ -44,8 +44,10 @@ export const Route = createFileRoute("/api/public/hooks/sync-staff")({
               const rows = [...found].map(([profile_url, s]) => ({ profile_url, display_name: s.name, listed_role: s.role, department_slug: dept.slug }));
               // New people: insert with list name; existing: keep their profile name.
               await db.from("staff_profiles").upsert(rows, { onConflict: "profile_url", ignoreDuplicates: true });
-              for (const r of rows)
-                await db.from("staff_profiles").update({ listed_role: r.listed_role, department_slug: r.department_slug, last_seen_at: startedAt, is_active: true }).eq("profile_url", r.profile_url);
+              await db.from("staff_profiles").upsert(
+                rows.map((r) => ({ profile_url: r.profile_url, listed_role: r.listed_role, department_slug: r.department_slug, last_seen_at: startedAt, is_active: true })),
+                { onConflict: "profile_url" },
+              );
               summary.discovered += rows.length;
               if (ok) okDepartments.push(dept.slug);
             });

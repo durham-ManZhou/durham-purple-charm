@@ -64,36 +64,36 @@
   --color-ink: var(--ink);
   --color-paper: var(--paper);
   --color-gold: var(--gold);
-  --font-display: "Noto Serif SC", "Songti SC", Georgia, serif;
-  --font-sans: "Noto Sans SC", "PingFang SC", sans-serif;
+  --font-display: Georgia, "Noto Serif SC", "Songti SC", serif;
+  --font-sans: "Open Sans", "Noto Sans SC", "PingFang SC", sans-serif;
 }
 
 :root {
   --radius: 0.375rem;
-  --background: oklch(0.975 0.005 82);
-  --foreground: oklch(0.2 0.02 285);
+  --background: oklch(0.965 0.006 260);
+  --foreground: oklch(0.22 0.035 245);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.32 0.12 314);
+  --primary: oklch(0.39 0.13 323);
   --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.94 0.018 310);
+  --secondary: oklch(0.93 0.02 323);
   --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.94 0.008 80);
-  --muted-foreground: oklch(0.48 0.025 285);
-  --accent: oklch(0.72 0.1 78);
-  --accent-foreground: oklch(0.18 0.025 285);
+  --muted: oklch(0.95 0.008 250);
+  --muted-foreground: oklch(0.47 0.025 250);
+  --accent: oklch(0.78 0.11 82);
+  --accent-foreground: oklch(0.22 0.035 245);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.85 0.018 290);
-  --input: oklch(0.85 0.018 290);
-  --ring: oklch(0.45 0.14 314);
-  --royal: oklch(0.32 0.12 314);
-  --royal-soft: oklch(0.93 0.03 314);
-  --ink: oklch(0.2 0.02 285);
-  --paper: oklch(0.985 0.004 82);
-  --gold: oklch(0.72 0.1 78);
+  --border: oklch(0.86 0.015 260);
+  --input: oklch(0.82 0.015 260);
+  --ring: oklch(0.39 0.13 323);
+  --royal: oklch(0.39 0.13 323);
+  --royal-soft: oklch(0.93 0.03 323);
+  --ink: oklch(0.22 0.035 245);
+  --paper: oklch(0.995 0.002 260);
+  --gold: oklch(0.78 0.11 82);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -154,8 +154,6 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     letter-spacing: 0;
-    background-image: linear-gradient(to right, color-mix(in oklab, var(--royal) 4%, transparent) 1px, transparent 1px);
-    background-size: 28px 28px;
   }
 
   h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0; }

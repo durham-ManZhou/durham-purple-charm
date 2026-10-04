@@ -1,7 +1,8 @@
 # Roadmap
 
-- [x] Replace third-party education-agency identity with Durham University identity
-- [x] Add Durham crest and official Palatinate-inspired brand palette
-- [x] Reframe home, study, admissions contact and visit flows as university services
-- [x] Verify mobile and desktop presentation and interaction
-- [x] Confirm preview build has no errors
+- [x] Replace the incorrect shield with Durham University’s official primary logo
+- [x] Restore the PRD’s exact three-tab information architecture
+- [x] Restore the daily launch advertisement and school submodules
+- [x] Restore overseas project categories, cards, details, filters and fixed actions
+- [x] Restore every PRD lead field, school contacts, AI Hub, booking and open-day entry
+- [ ] Verify mobile presentation, interactions and current build

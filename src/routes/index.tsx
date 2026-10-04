@@ -309,7 +309,7 @@ function BookingForm() {
     const { error } = await supabase.from("bookings").insert({ name: String(data.get("name")), phone: String(data.get("phone")), visit_date: date, time_slot: slot, party_size: partyNum, notes: String(data.get("notes") || ""), visit_code: code });
     setSending(false);
     if (error) { toast.error("提交失败，请稍后重试"); return; }
-    saveMyBooking({ code, date, slot, party });
+    saveMyBooking({ code, date, slot, party: partyNum });
     toast.success(`预约成功！到访凭证：${code}`, { duration: 8000 });
     form.reset(); setDate(""); setSlot(TIME_SLOTS[0]); setParty(""); setCounts({});
   };

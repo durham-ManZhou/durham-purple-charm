@@ -17,7 +17,7 @@ import interviewVideo from "@/assets/student-interview-demo.mp4.asset.json";
 import studentPortrait from "@/assets/student-portrait.jpg";
 import studentsStudy from "@/assets/students-study.jpg";
 import { Button } from "@/components/ui/button";
-import { durhamStaff, type StaffProfile } from "@/data/durham-staff";
+import type { StaffProfile } from "@/data/durham-staff";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { LiveProfileSections, useStaffDetail, useStaffSearch, type StaffCard } from "@/components/staff-live";

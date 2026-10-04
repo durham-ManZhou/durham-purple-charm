@@ -163,6 +163,96 @@
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @utility animate-rise { animation: rise 420ms ease-out both; }
 
+.wx-phone { width: min(100%, 390px); }
+.wx-phone-framed {
+  height: min(844px, calc(100dvh - 48px));
+  border-radius: 44px;
+  background: #0b0b0f;
+  padding: 10px;
+  box-shadow: 0 30px 80px rgb(0 0 0 / 45%);
+}
+.wx-phone-flush { width: 100%; min-height: 100dvh; }
+.wx-screen {
+  position: relative;
+  display: flex;
+  height: 100%;
+  min-height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--foreground);
+}
+.wx-phone-framed .wx-screen {
+  min-height: 0;
+  height: 100%;
+  border-radius: 34px;
+}
+.wx-status {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  height: 44px;
+  padding: 10px 22px 0;
+  font-size: 12px;
+  background: var(--paper);
+}
+.wx-status > :last-child { justify-self: end; }
+.wx-island {
+  width: 96px;
+  height: 28px;
+  border-radius: 18px;
+  background: #111;
+  justify-self: center;
+}
+.wx-nav {
+  position: relative;
+  display: flex;
+  height: 44px;
+  align-items: center;
+  padding: 0 8px;
+  background: var(--paper);
+}
+.wx-capsule {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  z-index: 20;
+  display: flex;
+  height: 32px;
+  width: 87px;
+  transform: translateY(-50%);
+  align-items: center;
+  border: 1px solid rgb(0 0 0 / 18%);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.72);
+  color: #111;
+  backdrop-filter: blur(12px);
+}
+.wx-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper);
+}
+.wx-home-indicator {
+  height: 20px;
+  flex-shrink: 0;
+  background: var(--paper);
+}
+.wx-home-indicator::before {
+  content: "";
+  display: block;
+  width: 120px;
+  height: 4px;
+  margin: 8px auto 0;
+  border-radius: 99px;
+  background: #111;
+  opacity: 0.18;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; }
 }

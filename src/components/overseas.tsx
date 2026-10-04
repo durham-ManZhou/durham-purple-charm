@@ -63,8 +63,7 @@ function Tag({ children, inverse }: { children: string; inverse?: boolean }) {
   return <span className={cn("rounded-sm border px-2 py-0.5 text-[11px] font-semibold", inverse ? "border-primary-foreground/40 text-primary-foreground" : "border-primary/25 bg-primary/5 text-primary")}>{children}</span>;
 }
 
-export function Overseas({ onDetail, onConsult, scrollTop }: { onDetail: (id: number) => void; onConsult: () => void; scrollTop: () => void }) {
-  const [type, setType] = useState<ProjectType>("国际本科");
+export function Overseas({ type, onType, onDetail, onConsult, scrollTop }: { type: ProjectType; onType: (type: ProjectType) => void; onDetail: (id: number) => void; onConsult: () => void; scrollTop: () => void }) {
   const [query, setQuery] = useState("");
   const [country, setCountry] = useState("");
   const [mode, setMode] = useState("");
@@ -74,12 +73,12 @@ export function Overseas({ onDetail, onConsult, scrollTop }: { onDetail: (id: nu
     .filter((p) => p.type === type && (!country || p.country === country) && (!mode || p.mode === mode) && (!subject || p.subject === subject))
     .filter((p) => `${p.name}${p.partner}${p.subject}${p.majors.join("")}`.toLowerCase().includes(query.trim().toLowerCase()))
     .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned)), [type, query, country, mode, subject]);
-  const pick = (t: ProjectType) => { setType(t); scrollTop(); };
+  const pick = (t: ProjectType) => { onType(t); scrollTop(); };
   const reset = () => { setCountry(""); setMode(""); setSubject(""); setQuery(""); };
 
   return <div className="animate-rise">
     <section className="bg-primary px-5 py-9 text-primary-foreground"><p className="text-xs font-bold uppercase text-accent">Overseas study</p><h1 className="mt-2 text-4xl font-bold">海外留学</h1><p className="mt-3 text-sm leading-6 text-primary-foreground/80">国际本科、硕士项目与本科直博，三类项目统一展示。</p></section>
-    <div className="sticky top-[68px] z-10 border-b border-border bg-paper"><div className="grid grid-cols-3">{types.map((t) => <Button key={t} variant="ghost" onClick={() => pick(t)} className={cn("rounded-none border-b-2 px-2 text-xs", t === type ? "border-primary text-primary" : "border-transparent text-muted-foreground")}>{t}</Button>)}</div></div>
+    <div className="sticky top-0 z-10 border-b border-border bg-paper"><div className="grid grid-cols-3">{types.map((t) => <Button key={t} variant="ghost" onClick={() => pick(t)} className={cn("rounded-none border-b-2 px-2 text-xs", t === type ? "border-primary text-primary" : "border-transparent text-muted-foreground")}>{t}</Button>)}</div></div>
     <section className="px-4 py-5">
       {showFilters && <div className="rounded-md border border-border bg-muted/40 p-3" aria-label="项目筛选">
         <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-primary"><SlidersHorizontal className="size-3.5" />项目筛选</p>
@@ -118,15 +117,25 @@ function Section({ n, title, children }: { n: string; title: string; children: R
   return <section><div className="flex items-baseline gap-3 border-b border-border pb-2"><span className="text-xs font-bold text-primary">{n}</span><h2 className="text-xl font-bold">{title}</h2></div><div className="mt-4 text-sm leading-7 text-muted-foreground">{children}</div></section>;
 }
 
-export function ProjectDetail({ project: p, onBack, onConsult }: { project: Project | undefined; onBack: () => void; onConsult: () => void }) {
+export function ProjectActionBar({ project: p, onConsult }: { project: Project; onConsult: () => void }) {
+  return (
+    <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-border bg-paper p-3">
+      <Button variant="outline" asChild><a href={p.brochureUrl} download={`${p.name}-招生简章.pdf`} target="_blank" rel="noreferrer"><Download className="size-4" />招生简章 PDF 下载</a></Button>
+      <Button onClick={onConsult}><MessageCircle className="size-4" />立即咨询</Button>
+    </div>
+  );
+}
+
+export function ProjectDetail({ project: p, onBack, onConsult, onShare }: { project: Project | undefined; onBack: () => void; onConsult: () => void; onShare?: () => void }) {
   const [shareOpen, setShareOpen] = useState(false);
   if (!p) return null;
   const share = async () => {
-    const url = `${window.location.origin}/?project=${p.id}`;
+    const url = `${window.location.origin}/?screen=project-detail`;
     if (navigator.share) { try { await navigator.share({ title: p.shareTitle, url }); return; } catch { /* cancelled */ } }
+    onShare?.();
     setShareOpen(true);
   };
-  return <div className="animate-rise pb-44">
+  return <div className="animate-rise pb-8">
     <div className="relative h-[400px]"><img src={p.image} alt={p.name} className="size-full object-cover" /><div className="absolute inset-0 bg-[linear-gradient(to_top,var(--primary),transparent_70%)]" />
       <div className="absolute left-4 right-4 top-4 flex justify-between"><Button variant="secondary" size="icon" onClick={onBack} aria-label="返回"><ArrowLeft className="size-5" /></Button><Button variant="secondary" size="icon" onClick={share} aria-label="分享给好友"><Share2 className="size-5" /></Button></div>
       <div className="absolute inset-x-0 bottom-0 p-6 text-primary-foreground"><div className="flex gap-2"><Tag inverse>{p.type}</Tag><Tag inverse>{p.country}</Tag><Tag inverse>{p.mode}</Tag></div><h1 className="mt-3 text-3xl font-bold leading-tight">{p.name}</h1><p className="mt-2 text-sm text-primary-foreground/80">{p.partner} · {p.highlight}</p></div></div>
@@ -137,15 +146,11 @@ export function ProjectDetail({ project: p, onBack, onConsult }: { project: Proj
       <Section n="04" title="招生信息"><div className="divide-y divide-border rounded-md border border-border">{[["报名时间", "待校方公布"], ["录取要求", "以正式简章为准"], ["学费", "待校方公布"], ["名额", "待校方公布"]].map(([k, v]) => <div className="flex justify-between p-4" key={k}><span>{k}</span><strong className="text-foreground">{v}</strong></div>)}</div></Section>
       <Section n="05" title="报名流程"><ol className="space-y-3">{["提交意向信息", "招生顾问联系", "准备申请材料", "提交申请并完成学校审核", "获得录取与入学准备"].map((s, i) => <li key={s} className="flex items-center gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary text-xs text-primary-foreground">{i + 1}</span><span className="font-semibold text-foreground">{s}</span></li>)}</ol></Section>
     </div>
-    <div className="fixed inset-x-0 bottom-17 z-20 mx-auto grid max-w-[520px] grid-cols-2 gap-2 border-t border-border bg-paper p-3">
-      <Button variant="outline" asChild><a href={p.brochureUrl} download={`${p.name}-招生简章.pdf`} target="_blank" rel="noreferrer"><Download className="size-4" />招生简章 PDF 下载</a></Button>
-      <Button onClick={onConsult}><MessageCircle className="size-4" />立即咨询</Button>
-    </div>
-    {shareOpen && <div className="fixed inset-0 z-50 grid place-items-end bg-ink/70" role="dialog" aria-modal="true" aria-label="分享给好友" onClick={() => setShareOpen(false)}>
-      <div className="w-full max-w-[520px] justify-self-center rounded-t-md bg-paper p-5" onClick={(e) => e.stopPropagation()}>
+    {shareOpen && <div className="absolute inset-0 z-50 grid place-items-end bg-ink/70" role="dialog" aria-modal="true" aria-label="分享给好友" onClick={() => setShareOpen(false)}>
+      <div className="w-full rounded-t-md bg-paper p-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between"><h2 className="text-lg font-bold">分享给好友</h2><Button size="icon" variant="ghost" onClick={() => setShareOpen(false)} aria-label="关闭"><X className="size-5" /></Button></div>
         <div className="mt-4 flex gap-3 rounded-md border border-border p-3"><img src={p.shareCover} alt="分享封面" className="aspect-[5/4] w-24 rounded-sm object-cover" /><div><p className="text-sm font-bold">{p.shareTitle}</p><p className="mt-1 text-xs text-muted-foreground">分享标题与封面可在后台配置</p></div></div>
-        <Button className="mt-4 w-full" onClick={async () => { await navigator.clipboard?.writeText(`${p.shareTitle} ${window.location.origin}/?project=${p.id}`).catch(() => undefined); toast.success("分享链接已复制，在微信中可直接发送给好友"); setShareOpen(false); }}>复制分享链接</Button>
+        <Button className="mt-4 w-full" onClick={async () => { await navigator.clipboard?.writeText(`${p.shareTitle} ${window.location.origin}/?screen=project-detail`).catch(() => undefined); toast.success("分享链接已复制，在微信中可直接发送给好友"); setShareOpen(false); }}>复制分享链接</Button>
       </div>
     </div>}
   </div>;

@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  ArrowLeft, ArrowRight, BookOpen, Building2, CalendarDays, CalendarX2, Check, ChevronRight,
-  Clock3, Download, ExternalLink, FileText, GraduationCap, Headphones, Mail, MapPin,
-  MessageCircle, Phone, Play, Search, Share2, Sparkles, University, UsersRound, X,
+  ArrowLeft, ArrowRight, Building2, CalendarDays, CalendarX2, ChevronRight,
+  Clock3, ExternalLink, FileText, GraduationCap, Headphones, Mail, MapPin,
+  MessageCircle, Phone, Play, Search, Sparkles, University, UsersRound, X,
 } from "lucide-react";
-import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { toast, Toaster } from "sonner";
 
 import campusHero from "@/assets/campus-hero.jpg";
@@ -16,11 +16,17 @@ import logoWhite from "@/assets/durham-logo-white.svg.asset.json";
 import interviewVideo from "@/assets/student-interview-demo.mp4.asset.json";
 import studentPortrait from "@/assets/student-portrait.jpg";
 import studentsStudy from "@/assets/students-study.jpg";
+import { DeployPage, MiniProgramStudio, OverviewSheet, PrivacyPage } from "@/components/miniprogram-demo";
+import { WeChatPhone } from "@/components/wechat-shell";
 import { Button } from "@/components/ui/button";
-import type { StaffProfile } from "@/data/durham-staff";
+import { durhamStaff, type StaffProfile } from "@/data/durham-staff";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  navForScreen, navShowsBack, navTitle, parseScreenParam,
+  type ContactMode, type MainTab, type NavSnapshot, type ProjectType, type SchoolView, type ScreenId,
+} from "@/lib/miniprogram-screens";
 import { cn } from "@/lib/utils";
-import { Overseas, ProjectDetail, projects } from "@/components/overseas";
+import { Overseas, ProjectActionBar, ProjectDetail, projects } from "@/components/overseas";
 import { LiveProfileSections, useStaffDetail, useStaffSearch, type StaffCard } from "@/components/staff-live";
 
 export const Route = createFileRoute("/")({
@@ -35,8 +41,6 @@ export const Route = createFileRoute("/")({
   component: AdmissionsApp,
 });
 
-type MainTab = "school" | "overseas" | "contact";
-type SchoolView = "index" | "about" | "faculty" | "campus" | "interviews";
 type StoryContent = { id: string; type: "图文" | "视频"; title: string; image: string; video?: string };
 type StudentStory = { id: number; name: string; offer: string; quote: string; image: string; contents: StoryContent[] };
 type FacultyGroup = { id: string; name: string; english: string; description: string; departments: { name: string; english: string }[] };
@@ -118,69 +122,178 @@ const studentStories: StudentStory[] = [
 ];
 
 const fieldClass = "min-h-12 w-full rounded-md border border-input bg-paper px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
-const scrollToAppTop = () => window.scrollTo({ top: 0, behavior: "instant" });
+const demoStaff = durhamStaff[0] as StaffProfile;
 
-function AdmissionsApp() {
-  const [tab, setTab] = useState<MainTab>("school");
-  const [schoolView, setSchoolView] = useState<SchoolView>("index");
-  const [detailId, setDetailId] = useState<number | null>(null);
-  const [consultOpen, setConsultOpen] = useState(false);
-  const [adOpen, setAdOpen] = useState(false);
+function useDesktopFrame() {
+  const [framed, setFramed] = useState(false);
   useEffect(() => {
-    const key = `durham-ad-${new Date().toISOString().slice(0, 10)}`;
-    if (!localStorage.getItem(key)) setAdOpen(true);
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setFramed(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
   }, []);
-  const closeAd = () => { localStorage.setItem(`durham-ad-${new Date().toISOString().slice(0, 10)}`, "seen"); setAdOpen(false); };
-  const changeTab = (next: MainTab) => { setTab(next); setSchoolView("index"); setDetailId(null); requestAnimationFrame(scrollToAppTop); };
-  const changeSchoolView = (next: SchoolView) => { setSchoolView(next); requestAnimationFrame(scrollToAppTop); };
-  const openProject = (id: number) => { setTab("overseas"); setDetailId(id); setAdOpen(false); requestAnimationFrame(scrollToAppTop); };
-  return <div className="min-h-screen bg-background text-foreground">
-    <div className="mx-auto min-h-screen max-w-[520px] bg-paper shadow-xl">
-      <TopBar />
-      <main className="pb-24">
-        {tab === "school" && <School view={schoolView} onView={changeSchoolView} onOverseas={() => changeTab("overseas")} onContact={() => changeTab("contact")} />}
-        {tab === "overseas" && (detailId ? <ProjectDetail project={projects.find((item) => item.id === detailId)} onBack={() => { setDetailId(null); requestAnimationFrame(scrollToAppTop); }} onConsult={() => setConsultOpen(true)} /> : <Overseas onDetail={openProject} onConsult={() => setConsultOpen(true)} scrollTop={scrollToAppTop} />)}
-        {tab === "contact" && <Contact />}
-      </main>
-      <Button aria-label="微信客服" title="微信客服" size="icon" onClick={() => setConsultOpen(true)} className="fixed bottom-22 right-[max(1rem,calc(50%-244px))] z-30 rounded-full shadow-lg"><Headphones className="size-5" /></Button>
-      <BottomNav tab={tab} onChange={changeTab} />
-    </div>
-    {consultOpen && <ConsultModal onClose={() => setConsultOpen(false)} onForm={() => { setConsultOpen(false); changeTab("contact"); }} />}
-    {adOpen && <LaunchAd onClose={closeAd} onOpen={() => openProject(1)} />}
-    <Toaster position="top-center" richColors />
-  </div>;
+  return framed;
 }
 
-function TopBar() { return <header className="sticky top-0 z-20 flex h-[68px] items-center border-b border-border bg-paper/95 px-4 backdrop-blur"><img src={logoDark.url} alt="Durham University 官方标志" className="h-10 w-auto max-w-[210px] object-contain object-left" /></header>; }
+function AdmissionsApp() {
+  const framed = useDesktopFrame();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [nav, setNav] = useState<NavSnapshot>(() => navForScreen("school-home"));
+  const [overviewOpen, setOverviewOpen] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<StaffProfile | null>(null);
+  const [selectedStory, setSelectedStory] = useState<StudentStory | null>(null);
+  const scrollToAppTop = () => scrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
 
-function School({ view, onView, onOverseas, onContact }: { view: SchoolView; onView: (view: SchoolView) => void; onOverseas: () => void; onContact: () => void }) {
-  if (view !== "index") return <SchoolDetail view={view} onBack={() => onView("index")} />;
-  const entries: { icon: typeof BookOpen; title: string; text: string; view: SchoolView }[] = [
+  const apply = (next: NavSnapshot) => {
+    setNav(next);
+    setSelectedStaff(next.showStaffDetail ? demoStaff : null);
+    setSelectedStory(next.showStoryDetail ? studentStories[0] ?? null : null);
+    setOverviewOpen(false);
+    requestAnimationFrame(scrollToAppTop);
+    const url = new URL(window.location.href);
+    url.searchParams.set("screen", next.screen);
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const screen = parseScreenParam(params.get("screen"));
+    const project = Number(params.get("project"));
+    if (screen) { apply(navForScreen(screen)); return; }
+    if (project && projects.some((item) => item.id === project)) { apply({ ...navForScreen("project-detail"), detailId: project }); return; }
+    const key = `durham-ad-${new Date().toISOString().slice(0, 10)}`;
+    if (!localStorage.getItem(key)) apply(navForScreen("ad"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const closeAd = () => { localStorage.setItem(`durham-ad-${new Date().toISOString().slice(0, 10)}`, "seen"); apply(navForScreen("school-home")); };
+  const changeTab = (next: MainTab) => {
+    if (next === "school") apply(navForScreen("school-home"));
+    if (next === "overseas") apply(navForScreen("overseas-undergrad"));
+    if (next === "contact") apply(navForScreen("contact-lead"));
+  };
+  const changeSchoolView = (next: SchoolView) => {
+    const map: Record<SchoolView, ScreenId> = { index: "school-home", about: "school-about", faculty: "school-faculty", campus: "school-campus", interviews: "school-interviews" };
+    apply(navForScreen(map[next]));
+  };
+  const openProject = (id: number) => apply({ ...navForScreen("project-detail"), detailId: id });
+  const goBack = () => {
+    if (nav.privacyOpen || nav.deployOpen) { apply(navForScreen("school-home")); return; }
+    if (nav.showStaffDetail) { apply(navForScreen("school-faculty")); return; }
+    if (nav.showStoryDetail) { apply(navForScreen("school-interviews")); return; }
+    if (nav.detailId) { apply(navForScreen(nav.overseasType === "硕士项目" ? "overseas-master" : nav.overseasType === "本科直博" ? "overseas-phd" : "overseas-undergrad")); return; }
+    if (nav.tab === "school" && nav.schoolView !== "index") apply(navForScreen("school-home"));
+  };
+  const openConsult = () => setNav((current) => ({ ...current, screen: "consult", consultOpen: true, adOpen: false, privacyOpen: false, deployOpen: false }));
+  const closeConsult = () => setNav((current) => ({ ...current, consultOpen: false }));
+  const activeProject = projects.find((item) => item.id === nav.detailId);
+  const showDock = Boolean(activeProject) && !nav.privacyOpen && !nav.deployOpen && !overviewOpen;
+
+  const phone = (
+    <WeChatPhone
+      framed={framed}
+      title={overviewOpen ? "页面总览" : navTitle(nav)}
+      showBack={overviewOpen ? true : navShowsBack(nav)}
+      onBack={() => { if (overviewOpen) setOverviewOpen(false); else goBack(); }}
+      onOverview={() => setOverviewOpen(true)}
+      onShare={() => apply(navForScreen("project-detail"))}
+      onRelaunch={() => { localStorage.removeItem(`durham-ad-${new Date().toISOString().slice(0, 10)}`); apply(navForScreen("ad")); }}
+      onPrivacy={() => apply(navForScreen("privacy"))}
+      onDeploy={() => apply(navForScreen("deploy"))}
+      tabBar={nav.privacyOpen || nav.deployOpen || overviewOpen ? undefined : <BottomNav tab={nav.tab} onChange={changeTab} />}
+    >
+      <div className="relative flex h-full min-h-0 flex-1 flex-col">
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+          {!overviewOpen && !nav.privacyOpen && !nav.deployOpen && nav.tab === "school" && (
+            <School
+              view={nav.schoolView}
+              selectedStaff={selectedStaff}
+              selectedStory={selectedStory}
+              onView={changeSchoolView}
+              onStaff={(staff) => { setSelectedStaff(staff); setNav((current) => ({ ...current, screen: "school-staff", showStaffDetail: true })); requestAnimationFrame(scrollToAppTop); }}
+              onStaffBack={() => apply(navForScreen("school-faculty"))}
+              onStory={(story) => { setSelectedStory(story); setNav((current) => ({ ...current, screen: "school-story", showStoryDetail: true })); requestAnimationFrame(scrollToAppTop); }}
+              onStoryBack={() => apply(navForScreen("school-interviews"))}
+              onOverseas={() => changeTab("overseas")}
+              onContact={() => changeTab("contact")}
+              onOverview={() => setOverviewOpen(true)}
+            />
+          )}
+          {!overviewOpen && !nav.privacyOpen && !nav.deployOpen && nav.tab === "overseas" && (
+            nav.detailId
+              ? <ProjectDetail project={activeProject} onBack={goBack} onConsult={openConsult} />
+              : <Overseas type={nav.overseasType} onType={(type: ProjectType) => apply(navForScreen(type === "硕士项目" ? "overseas-master" : type === "本科直博" ? "overseas-phd" : "overseas-undergrad"))} onDetail={openProject} onConsult={openConsult} scrollTop={scrollToAppTop} />
+          )}
+          {!overviewOpen && !nav.privacyOpen && !nav.deployOpen && nav.tab === "contact" && (
+            <Contact mode={nav.contactMode} onMode={(mode) => apply(navForScreen(mode === "info" ? "contact-info" : mode === "studio" ? "contact-studio" : mode === "booking" ? "contact-booking" : mode === "event" ? "contact-event" : "contact-lead"))} />
+          )}
+        </div>
+        {showDock && activeProject && <ProjectActionBar project={activeProject} onConsult={openConsult} />}
+        {!overviewOpen && !nav.privacyOpen && !nav.deployOpen && !nav.adOpen && (
+          <Button aria-label="微信客服" title="微信客服" size="icon" onClick={openConsult} className="absolute bottom-4 right-3 z-30 rounded-full shadow-lg"><Headphones className="size-5" /></Button>
+        )}
+        {overviewOpen && <OverviewSheet active={nav.screen} onSelect={(id) => apply(navForScreen(id))} onClose={() => setOverviewOpen(false)} />}
+        {!overviewOpen && nav.privacyOpen && <div className="absolute inset-0 z-20 overflow-y-auto bg-paper"><PrivacyPage /></div>}
+        {!overviewOpen && nav.deployOpen && <div className="absolute inset-0 z-20 overflow-y-auto bg-paper"><DeployPage /></div>}
+        {nav.consultOpen && <ConsultModal onClose={closeConsult} onForm={() => apply(navForScreen("contact-lead"))} />}
+        {nav.adOpen && <LaunchAd onClose={closeAd} onOpen={() => openProject(1)} />}
+        <Toaster position="top-center" richColors />
+      </div>
+    </WeChatPhone>
+  );
+
+  return <MiniProgramStudio active={nav.screen} onSelect={(id) => apply(navForScreen(id))} showCatalog={framed} phone={phone} />;
+}
+
+function School({ view, selectedStaff, selectedStory, onView, onStaff, onStaffBack, onStory, onStoryBack, onOverseas, onContact, onOverview }: {
+  view: SchoolView;
+  selectedStaff: StaffProfile | null;
+  selectedStory: StudentStory | null;
+  onView: (view: SchoolView) => void;
+  onStaff: (staff: StaffProfile) => void;
+  onStaffBack: () => void;
+  onStory: (story: StudentStory) => void;
+  onStoryBack: () => void;
+  onOverseas: () => void;
+  onContact: () => void;
+  onOverview: () => void;
+}) {
+  if (view !== "index") return <SchoolDetail view={view} selectedStaff={selectedStaff} selectedStory={selectedStory} onBack={() => onView("index")} onStaff={onStaff} onStaffBack={onStaffBack} onStory={onStory} onStoryBack={onStoryBack} />;
+  const entries: { icon: typeof University; title: string; text: string; view: SchoolView }[] = [
     { icon: University, title: "学校介绍", text: "简介、历史与荣誉资质", view: "about" },
     { icon: UsersRound, title: "师资力量", text: "了解教学与研究团队", view: "faculty" },
     { icon: Building2, title: "校园环境", text: "探索杜伦校园与城市", view: "campus" },
     { icon: Play, title: "学生访谈", text: "聆听真实的学习体验", view: "interviews" },
   ];
   return <div className="animate-rise">
-    <section className="relative h-[430px] overflow-hidden"><img src={campusHero} alt="杜伦大学校园" className="size-full object-cover" /><div className="absolute inset-0 bg-[linear-gradient(to_top,var(--primary)_0%,color-mix(in_oklab,var(--primary)_58%,transparent)_42%,transparent_78%)]" /><div className="absolute inset-x-0 bottom-0 p-6 text-primary-foreground"><p className="mb-3 text-xs font-bold uppercase text-accent">Welcome to Durham</p><h1 className="text-4xl font-bold leading-tight">认识杜伦大学</h1><p className="mt-3 text-sm leading-6 text-primary-foreground/85">深厚传统、卓越学术与独特学院社区。</p></div></section>
+    <section className="relative h-[430px] overflow-hidden"><img src={campusHero} alt="杜伦大学校园" className="size-full object-cover" /><div className="absolute inset-0 bg-[linear-gradient(to_top,var(--primary)_0%,color-mix(in_oklab,var(--primary)_58%,transparent)_42%,transparent_78%)]" /><div className="absolute inset-x-0 bottom-0 p-6 text-primary-foreground"><img src={logoWhite.url} alt="Durham University 官方反白标志" className="mb-4 h-10 w-auto max-w-[210px] object-contain object-left" /><p className="mb-3 text-xs font-bold uppercase text-accent">Welcome to Durham</p><h1 className="text-4xl font-bold leading-tight">认识杜伦大学</h1><p className="mt-3 text-sm leading-6 text-primary-foreground/85">深厚传统、卓越学术与独特学院社区。</p></div></section>
     <section className="px-4 py-8"><SectionHeading eyebrow="Explore our university" title="学校相关" /><div className="mt-5 grid grid-cols-2 gap-3">{entries.map(({ icon: Icon, title, text, view: next }) => <button key={title} onClick={() => onView(next)} className="min-h-40 rounded-md border border-border bg-paper p-4 text-left shadow-sm transition hover:border-primary"><Icon className="size-6 text-primary" /><h2 className="mt-6 text-lg font-bold">{title}</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">{text}</p><ChevronRight className="mt-3 size-4 text-primary" /></button>)}</div></section>
     <section className="border-y border-border bg-muted px-4 py-7"><div className="flex items-center gap-4"><div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><ExternalLink className="size-5" /></div><div className="min-w-0 flex-1"><h2 className="font-bold">学校官网</h2><p className="mt-1 text-xs text-muted-foreground">直达杜伦大学官方网站</p></div><Button variant="outline" size="sm" onClick={() => window.open("https://www.durham.ac.uk/", "_blank", "noopener,noreferrer")}>打开</Button></div></section>
+    <section className="px-4 py-6"><Button variant="outline" className="h-auto w-full justify-between px-4 py-4" onClick={onOverview}><span className="text-left"><strong className="block text-sm">小程序页面总览</strong><span className="mt-1 block text-xs font-normal text-muted-foreground">可视化全部入口、详情与部署页</span></span><ChevronRight className="size-4 text-primary" /></Button></section>
     <section className="px-4 py-8"><div className="overflow-hidden rounded-md bg-primary text-primary-foreground"><img src={studentsStudy} alt="学生在杜伦大学学习" className="aspect-[16/9] w-full object-cover" /><div className="p-5"><p className="text-xs font-bold uppercase text-accent">Study with us</p><h2 className="mt-2 text-2xl font-bold">探索海外留学项目</h2><p className="mt-3 text-sm leading-6 text-primary-foreground/80">按国际本科、硕士项目与本科直博查看项目。</p><div className="mt-5 flex gap-3"><Button variant="gold" onClick={onOverseas}>查看项目 <ArrowRight className="size-4" /></Button><Button variant="outline" className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10" onClick={onContact}>联系我们</Button></div></div></div></section>
   </div>;
 }
 
-function SchoolDetail({ view, onBack }: { view: Exclude<SchoolView, "index">; onBack: () => void }) {
-  const [selectedStaff, setSelectedStaff] = useState<StaffProfile | null>(null);
-  const [selectedStory, setSelectedStory] = useState<StudentStory | null>(null);
-  if (view === "faculty" && selectedStaff) return <StaffProfilePage staff={selectedStaff} onBack={() => { setSelectedStaff(null); requestAnimationFrame(scrollToAppTop); }} />;
-  if (view === "interviews" && selectedStory) return <StudentStoryDetail story={selectedStory} onBack={() => { setSelectedStory(null); requestAnimationFrame(scrollToAppTop); }} />;
+function SchoolDetail({ view, selectedStaff, selectedStory, onBack, onStaff, onStaffBack, onStory, onStoryBack }: {
+  view: Exclude<SchoolView, "index">;
+  selectedStaff: StaffProfile | null;
+  selectedStory: StudentStory | null;
+  onBack: () => void;
+  onStaff: (staff: StaffProfile) => void;
+  onStaffBack: () => void;
+  onStory: (story: StudentStory) => void;
+  onStoryBack: () => void;
+}) {
+  if (view === "faculty" && selectedStaff) return <StaffProfilePage staff={selectedStaff} onBack={onStaffBack} />;
+  if (view === "interviews" && selectedStory) return <StudentStoryDetail story={selectedStory} onBack={onStoryBack} />;
   const data = {
     about: { title: "学校介绍", image: campusHero, body: "杜伦大学创立于 1832 年，是一所位于英国历史名城杜伦的学院制大学。学校将研究与教学融入紧密的学院社区。办学历史、荣誉与资质请以学校官网最新信息为准。" },
     faculty: { title: "师资力量", image: studentsStudy, body: "杜伦大学现有四个学部级学术分类、共 27 个院系。你可以在小程序内按学部浏览，并通过姓名、院系、职称或研究方向等关键词查询已核验的在校教师。" },
     campus: { title: "校园环境", image: campusHero, body: "历史建筑、河畔景观与现代学习空间共同构成杜伦独特的学习环境。当前图集使用演示图片，后续可直接替换为校方正式素材。" },
     interviews: { title: "学生访谈", image: studentPortrait, body: "学生访谈将展示学生姓名、录取院校与真实感言，并支持文章和视频内容。正式访谈素材待校方提供。" },
   }[view];
-  return <article className="animate-rise"><div className="relative h-72"><img src={data.image} alt={data.title} className="size-full object-cover" /><Button size="icon" variant="secondary" onClick={onBack} aria-label="返回" className="absolute left-4 top-4 shadow-md"><ArrowLeft className="size-5" /></Button></div><div className="px-5 py-8"><p className="text-xs font-bold uppercase text-primary">About Durham</p><h1 className="mt-2 text-3xl font-bold">{data.title}</h1><p className="mt-5 text-sm leading-8 text-muted-foreground">{data.body}</p>{view === "faculty" && <FacultyDirectory onSelect={(staff) => { setSelectedStaff(staff); requestAnimationFrame(scrollToAppTop); }} />}{view === "campus" && <CampusGallery />}{view === "interviews" && <StudentStories onSelect={(story) => { setSelectedStory(story); requestAnimationFrame(scrollToAppTop); }} />}</div></article>;
+  return <article className="animate-rise"><div className="relative h-72"><img src={data.image} alt={data.title} className="size-full object-cover" /><Button size="icon" variant="secondary" onClick={onBack} aria-label="返回" className="absolute left-4 top-4 shadow-md"><ArrowLeft className="size-5" /></Button></div><div className="px-5 py-8"><p className="text-xs font-bold uppercase text-primary">About Durham</p><h1 className="mt-2 text-3xl font-bold">{data.title}</h1><p className="mt-5 text-sm leading-8 text-muted-foreground">{data.body}</p>{view === "faculty" && <FacultyDirectory onSelect={onStaff} />}{view === "campus" && <CampusGallery />}{view === "interviews" && <StudentStories onSelect={onStory} />}</div></article>;
 }
 
 function StudentStories({ onSelect }: { onSelect: (story: StudentStory) => void }) {
@@ -249,10 +362,9 @@ function StaffProfilePage({ staff, onBack }: { staff: StaffProfile; onBack: () =
 
 
 
-function Contact() {
-  const [mode, setMode] = useState<"lead" | "info" | "studio" | "booking" | "event">("lead");
+function Contact({ mode, onMode }: { mode: ContactMode; onMode: (mode: ContactMode) => void }) {
   const options = [{ id: "lead" as const, label: "意向填写", icon: FileText }, { id: "info" as const, label: "联系我们", icon: Phone }, { id: "studio" as const, label: "AI Hub", icon: Sparkles }, { id: "booking" as const, label: "预约到校", icon: CalendarDays }, { id: "event" as const, label: "开放日", icon: UsersRound }];
-  return <div className="animate-rise"><PageIntro eyebrow="Contact us" title="联系我们" text="提交升学意向、联系学校或预约到校。" /><div className="overflow-x-auto border-b border-border bg-paper px-2"><div className="flex min-w-max">{options.map(({ id, label, icon: Icon }) => <Button key={id} variant="ghost" onClick={() => { setMode(id); requestAnimationFrame(scrollToAppTop); }} className={cn("h-16 min-h-16 flex-col rounded-none border-b-2 px-4 text-[11px]", mode === id ? "border-primary text-primary" : "border-transparent text-muted-foreground")}><Icon className="size-4" />{label}</Button>)}</div></div><section className="px-4 py-7">{mode === "lead" && <LeadForm />}{mode === "info" && <ContactInfo />}{mode === "studio" && <AiHub />}{mode === "booking" && <BookingForm />}{mode === "event" && <OpenDay />}</section></div>;
+  return <div className="animate-rise"><PageIntro eyebrow="Contact us" title="联系我们" text="提交升学意向、联系学校或预约到校。" /><div className="overflow-x-auto border-b border-border bg-paper px-2"><div className="flex min-w-max">{options.map(({ id, label, icon: Icon }) => <Button key={id} variant="ghost" onClick={() => onMode(id)} className={cn("h-16 min-h-16 flex-col rounded-none border-b-2 px-4 text-[11px]", mode === id ? "border-primary text-primary" : "border-transparent text-muted-foreground")}><Icon className="size-4" />{label}</Button>)}</div></div><section className="px-4 py-7">{mode === "lead" && <LeadForm />}{mode === "info" && <ContactInfo />}{mode === "studio" && <AiHub />}{mode === "booking" && <BookingForm />}{mode === "event" && <OpenDay />}</section></div>;
 }
 
 function LeadForm() {
@@ -354,12 +466,12 @@ function CancelBooking({ onCancelled }: { onCancelled: () => void }) {
     toast.success("预约已取消，名额已释放");
     onCancelled();
   };
-  return <div className="space-y-5 rounded-lg border-2 border-primary/30 bg-primary/5 p-5"><div className="flex items-center gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><CalendarX2 className="size-5" /></span><div><p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">My bookings</p><h2 className="text-xl font-bold">我的预约</h2></div></div><p className="text-sm leading-6 text-muted-foreground">你在本机提交的预约会显示在这里，可一键取消，取消后名额自动释放。</p>{mine.length === 0 ? <p className="rounded-md border border-dashed border-border bg-paper p-5 text-center text-sm text-muted-foreground">暂无预约记录</p> : <div className="space-y-3">{mine.map((b) => <div key={b.code} className="rounded-md border border-border bg-paper p-4 shadow-sm"><div className="flex items-center justify-between gap-3"><div className="min-w-0"><p className="truncate text-base font-bold">{b.date} · {b.slot} · {b.party} 人</p><p className="mt-1 text-xs text-muted-foreground">到访凭证 {b.code}</p></div><span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">待到访</span></div><Button variant="destructive" className="mt-3 w-full" disabled={busy === b.code} onClick={() => setConfirming(b)}>{busy === b.code ? "正在取消…" : "取消这次预约"}</Button></div>)}</div>}{confirming && <div className="fixed inset-0 z-50 grid place-items-center bg-ink/70 p-6" role="dialog" aria-modal="true" aria-label="确认取消预约"><div className="w-full max-w-[340px] rounded-md bg-paper p-6"><h3 className="text-lg font-bold">确定取消这次预约吗？</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{confirming.date} · {confirming.slot} · {confirming.party} 人（凭证 {confirming.code}）。取消后名额将立即释放，此操作不可撤销。</p><div className="mt-6 grid grid-cols-2 gap-3"><Button variant="outline" onClick={() => setConfirming(null)}>再想想</Button><Button variant="destructive" disabled={busy === confirming.code} onClick={() => cancel(confirming)}>{busy === confirming.code ? "取消中…" : "确定取消"}</Button></div></div></div>}</div>;
+  return <div className="space-y-5 rounded-lg border-2 border-primary/30 bg-primary/5 p-5"><div className="flex items-center gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><CalendarX2 className="size-5" /></span><div><p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">My bookings</p><h2 className="text-xl font-bold">我的预约</h2></div></div><p className="text-sm leading-6 text-muted-foreground">你在本机提交的预约会显示在这里，可一键取消，取消后名额自动释放。</p>{mine.length === 0 ? <p className="rounded-md border border-dashed border-border bg-paper p-5 text-center text-sm text-muted-foreground">暂无预约记录</p> : <div className="space-y-3">{mine.map((b) => <div key={b.code} className="rounded-md border border-border bg-paper p-4 shadow-sm"><div className="flex items-center justify-between gap-3"><div className="min-w-0"><p className="truncate text-base font-bold">{b.date} · {b.slot} · {b.party} 人</p><p className="mt-1 text-xs text-muted-foreground">到访凭证 {b.code}</p></div><span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">待到访</span></div><Button variant="destructive" className="mt-3 w-full" disabled={busy === b.code} onClick={() => setConfirming(b)}>{busy === b.code ? "正在取消…" : "取消这次预约"}</Button></div>)}</div>}{confirming && <div className="absolute inset-0 z-50 grid place-items-center bg-ink/70 p-6" role="dialog" aria-modal="true" aria-label="确认取消预约"><div className="w-full max-w-[340px] rounded-md bg-paper p-6"><h3 className="text-lg font-bold">确定取消这次预约吗？</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{confirming.date} · {confirming.slot} · {confirming.party} 人（凭证 {confirming.code}）。取消后名额将立即释放，此操作不可撤销。</p><div className="mt-6 grid grid-cols-2 gap-3"><Button variant="outline" onClick={() => setConfirming(null)}>再想想</Button><Button variant="destructive" disabled={busy === confirming.code} onClick={() => cancel(confirming)}>{busy === confirming.code ? "取消中…" : "确定取消"}</Button></div></div></div>}</div>;
 }
 function OpenDay() { return <div><SectionHeading eyebrow="Coming next" title="校园开放日" description="活动报名为二期功能。" /><div className="mt-6 overflow-hidden rounded-md border border-border"><img src={campusHero} alt="杜伦大学校园开放日" className="aspect-[16/9] w-full object-cover" /><div className="p-5"><p className="text-xs font-semibold text-primary">活动信息待发布</p><h2 className="mt-2 text-xl font-bold">校园开放日与招生说明会</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">活动名称、时间、地点与亮点将在校方确认后展示。</p><Button className="mt-5 w-full" disabled>报名暂未开放</Button></div></div></div>; }
 
-function LaunchAd({ onClose, onOpen }: { onClose: () => void; onOpen: () => void }) { return <div className="fixed inset-0 z-50 grid place-items-center bg-ink/75 p-6" role="dialog" aria-modal="true" aria-label="主推项目"><div className="relative w-full max-w-[340px] overflow-hidden rounded-md bg-primary shadow-2xl"><img src={campusHero} alt="主推项目" className="aspect-[3/4] w-full object-cover" /><div className="absolute inset-0 bg-[linear-gradient(to_top,var(--primary)_2%,transparent_70%)]" /><Button size="icon" variant="secondary" onClick={onClose} aria-label="关闭广告" className="absolute right-3 top-3 rounded-full"><X className="size-5" /></Button><div className="absolute inset-x-0 bottom-0 p-6 text-primary-foreground"><img src={logoWhite.url} alt="Durham University 官方反白标志" className="h-10 w-auto max-w-[220px] object-contain object-left" /><p className="mt-6 text-xs font-bold text-accent">主推项目</p><h2 className="mt-2 text-3xl font-bold">国际本科衔接项目</h2><p className="mt-2 text-sm text-primary-foreground/80">探索项目内容与申请流程</p><Button variant="gold" className="mt-5 w-full" onClick={onOpen}>查看项目详情 <ArrowRight className="size-4" /></Button></div></div></div>; }
-function ConsultModal({ onClose, onForm }: { onClose: () => void; onForm: () => void }) { return <div className="fixed inset-0 z-50 grid place-items-end bg-ink/70 sm:place-items-center" role="dialog" aria-modal="true" aria-label="微信客服"><div className="w-full max-w-[520px] rounded-t-md bg-paper p-6 sm:rounded-md"><div className="flex items-center justify-between"><img src={logoDark.url} alt="Durham University 官方标志" className="h-10 w-auto max-w-[210px]" /><Button variant="ghost" size="icon" onClick={onClose} aria-label="关闭"><X className="size-5" /></Button></div><div className="mt-6 rounded-md bg-muted p-5"><h2 className="font-bold">直接咨询</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">正式微信客服会话待小程序主体接入；你可以先填写意向信息。</p></div><Button className="mt-4 w-full" onClick={onForm}>填写意向信息 <ArrowRight className="size-4" /></Button></div></div>; }
+function LaunchAd({ onClose, onOpen }: { onClose: () => void; onOpen: () => void }) { return <div className="absolute inset-0 z-50 grid place-items-center bg-ink/75 p-6" role="dialog" aria-modal="true" aria-label="主推项目"><div className="relative w-full max-w-[340px] overflow-hidden rounded-md bg-primary shadow-2xl"><img src={campusHero} alt="主推项目" className="aspect-[3/4] w-full object-cover" /><div className="absolute inset-0 bg-[linear-gradient(to_top,var(--primary)_2%,transparent_70%)]" /><Button size="icon" variant="secondary" onClick={onClose} aria-label="关闭广告" className="absolute right-3 top-3 rounded-full"><X className="size-5" /></Button><div className="absolute inset-x-0 bottom-0 p-6 text-primary-foreground"><img src={logoWhite.url} alt="Durham University 官方反白标志" className="h-10 w-auto max-w-[220px] object-contain object-left" /><p className="mt-6 text-xs font-bold text-accent">主推项目</p><h2 className="mt-2 text-3xl font-bold">国际本科衔接项目</h2><p className="mt-2 text-sm text-primary-foreground/80">探索项目内容与申请流程</p><Button variant="gold" className="mt-5 w-full" onClick={onOpen}>查看项目详情 <ArrowRight className="size-4" /></Button></div></div></div>; }
+function ConsultModal({ onClose, onForm }: { onClose: () => void; onForm: () => void }) { return <div className="absolute inset-0 z-50 grid place-items-end bg-ink/70" role="dialog" aria-modal="true" aria-label="微信客服"><div className="w-full rounded-t-md bg-paper p-6"><div className="flex items-center justify-between"><img src={logoDark.url} alt="Durham University 官方标志" className="h-10 w-auto max-w-[210px]" /><Button variant="ghost" size="icon" onClick={onClose} aria-label="关闭"><X className="size-5" /></Button></div><div className="mt-6 rounded-md bg-muted p-5"><h2 className="font-bold">直接咨询</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">正式微信客服会话待小程序主体接入；你可以先填写意向信息。</p></div><Button className="mt-4 w-full" onClick={onForm}>填写意向信息 <ArrowRight className="size-4" /></Button></div></div>; }
 
 function PageIntro({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) { return <section className="bg-primary px-5 py-9 text-primary-foreground"><p className="text-xs font-bold uppercase text-accent">{eyebrow}</p><h1 className="mt-2 text-4xl font-bold">{title}</h1><p className="mt-3 text-sm leading-6 text-primary-foreground/80">{text}</p></section>; }
 function SectionHeading({ eyebrow, title, description }: { eyebrow: string; title: string; description?: string }) { return <div><p className="text-xs font-bold uppercase text-primary">{eyebrow}</p><h2 className="mt-2 text-2xl font-bold">{title}</h2>{description && <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>}</div>; }
@@ -367,4 +479,4 @@ function Field({ label, children }: { label: string; children: ReactNode }) { re
 function Tag({ children, inverse = false }: { children: ReactNode; inverse?: boolean }) { return <span className={cn("rounded-full px-2.5 py-1 text-[10px] font-semibold", inverse ? "bg-primary-foreground/15 text-primary-foreground" : "bg-secondary text-primary")}>{children}</span>; }
 function DetailSection({ number, title, children }: { number: string; title: string; children: ReactNode }) { return <section><div className="mb-4 flex items-center gap-3 border-b border-border pb-3"><span className="text-xs font-bold text-primary">{number}</span><h2 className="text-xl font-bold">{title}</h2></div><div className="text-sm leading-7 text-muted-foreground">{children}</div></section>; }
 function ContactLine({ icon, title, detail, action, onClick, href }: { icon: ReactNode; title: string; detail: string; action?: string; onClick?: () => void; href?: string }) { if (href) return <Button variant="outline" asChild className="h-auto min-h-18 w-full justify-start gap-4 p-4 text-left disabled:opacity-100"><a href={href}><span className="text-primary [&>svg]:size-5">{icon}</span><span className="min-w-0 flex-1"><strong className="block text-sm">{title}</strong><span className="mt-1 block whitespace-normal text-xs font-normal text-muted-foreground">{detail}</span></span>{action && <span className="text-xs text-primary">{action}</span>}</a></Button>; return <Button variant="outline" onClick={onClick} disabled={!onClick} className="h-auto min-h-18 w-full justify-start gap-4 p-4 text-left disabled:opacity-100"><span className="text-primary [&>svg]:size-5">{icon}</span><span className="min-w-0 flex-1"><strong className="block text-sm">{title}</strong><span className="mt-1 block whitespace-normal text-xs font-normal text-muted-foreground">{detail}</span></span>{action && <span className="text-xs text-primary">{action}</span>}</Button>; }
-function BottomNav({ tab, onChange }: { tab: MainTab; onChange: (tab: MainTab) => void }) { const items: [MainTab, typeof University, string][] = [["school", University, "学校相关"], ["overseas", GraduationCap, "海外留学"], ["contact", Phone, "联系我们"]]; return <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto grid h-17 max-w-[520px] grid-cols-3 border-t border-border bg-paper pb-[env(safe-area-inset-bottom)]">{items.map(([value, Icon, label]) => <Button key={value} variant="ghost" onClick={() => onChange(value)} className={cn("relative h-17 min-h-17 flex-col gap-1 rounded-none text-[11px]", tab === value ? "text-primary" : "text-muted-foreground")}>{tab === value && <span className="absolute top-0 h-0.5 w-9 bg-primary" />}<Icon className="size-5" />{label}</Button>)}</nav>; }
+function BottomNav({ tab, onChange }: { tab: MainTab; onChange: (tab: MainTab) => void }) { const items: [MainTab, typeof University, string][] = [["school", University, "学校相关"], ["overseas", GraduationCap, "海外留学"], ["contact", Phone, "联系我们"]]; return <nav className="grid h-12 shrink-0 grid-cols-3 border-t border-border bg-paper">{items.map(([value, Icon, label]) => <Button key={value} variant="ghost" onClick={() => onChange(value)} className={cn("relative h-12 min-h-12 flex-col gap-0.5 rounded-none text-[11px]", tab === value ? "text-primary" : "text-muted-foreground")}>{tab === value && <span className="absolute top-0 h-0.5 w-9 bg-primary" />}<Icon className="size-5" />{label}</Button>)}</nav>; }

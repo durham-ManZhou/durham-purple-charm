@@ -17,3 +17,4 @@
 - [x] Align all three overseas categories to the required shared project-card fields and 3:4 cover format
 - [x] Group student interview articles and videos by student, showing only available media
 - [x] Add verified official profile photos to staff list and detail views, with safe fallbacks
+- [x] 教师官网 Profile 全量同步 + 每日自动更新

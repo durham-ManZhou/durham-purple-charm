@@ -16,6 +16,7 @@ import logoWhite from "@/assets/durham-logo-white.svg.asset.json";
 import studentPortrait from "@/assets/student-portrait.jpg";
 import studentsStudy from "@/assets/students-study.jpg";
 import { Button } from "@/components/ui/button";
+import { durhamStaff, type StaffProfile } from "@/data/durham-staff";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -161,7 +162,7 @@ function School({ view, onView, onOverseas, onContact }: { view: SchoolView; onV
 function SchoolDetail({ view, onBack }: { view: Exclude<SchoolView, "index">; onBack: () => void }) {
   const data = {
     about: { title: "学校介绍", image: campusHero, body: "杜伦大学创立于 1832 年，是一所位于英国历史名城杜伦的学院制大学。学校将研究与教学融入紧密的学院社区。办学历史、荣誉与资质请以学校官网最新信息为准。" },
-    faculty: { title: "师资力量", image: studentsStudy, body: "杜伦大学现有四个学部级学术分类、共 27 个院系。你可以按学部浏览院系，并通过学校官网实时教师目录查看姓名、职称、研究方向与完整个人介绍。" },
+    faculty: { title: "师资力量", image: studentsStudy, body: "杜伦大学现有四个学部级学术分类、共 27 个院系。你可以在小程序内按学部浏览，并通过姓名、院系、职称或研究方向等关键词查询已核验的在校教师。" },
     campus: { title: "校园环境", image: campusHero, body: "历史建筑、河畔景观与现代学习空间共同构成杜伦独特的学习环境。当前图集使用演示图片，后续可直接替换为校方正式素材。" },
     interviews: { title: "学生访谈", image: studentPortrait, body: "学生访谈将展示学生姓名、录取院校与真实感言，并支持文章和视频内容。正式访谈素材待校方提供。" },
   }[view];
@@ -194,24 +195,34 @@ function CampusGallery() {
 }
 
 function FacultyDirectory() {
-  const [facultyId, setFacultyId] = useState("arts-humanities");
+  const [facultyId, setFacultyId] = useState("all");
   const [staffQuery, setStaffQuery] = useState("");
+  const [selected, setSelected] = useState<StaffProfile | null>(null);
+  const normalizedTerms = staffQuery.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  const shownStaff = useMemo(() => durhamStaff.filter((staff) => {
+    if (facultyId !== "all" && staff.facultyId !== facultyId) return false;
+    if (normalizedTerms.length === 0) return true;
+    const searchable = [staff.name, staff.title, staff.titleZh, staff.faculty, staff.department, staff.departmentZh, ...staff.interests, ...staff.interestsZh].join(" ").toLocaleLowerCase();
+    return normalizedTerms.every((term) => searchable.includes(term));
+  }), [facultyId, staffQuery]);
   const activeFaculty = facultyGroups.find((faculty) => faculty.id === facultyId);
-  if (!activeFaculty) return null;
-  const openStaffDirectory = (query: string) => {
-    const url = new URL("https://www.durham.ac.uk/search/");
-    url.searchParams.set("searchStudioQuery", query || "*");
-    url.searchParams.set("isGrid", "false");
-    url.searchParams.set("facets", 'fq=sectiontype_ss:"staff"');
-    url.searchParams.set("start", "0");
-    window.open(url.toString(), "_blank", "noopener,noreferrer");
-  };
   return <div className="mt-8">
     <div className="border-y border-border py-5"><div className="grid grid-cols-2 gap-3"><div><strong className="block text-2xl text-primary">4</strong><span className="text-xs text-muted-foreground">学部级分类</span></div><div><strong className="block text-2xl text-primary">27</strong><span className="text-xs text-muted-foreground">院系与学院</span></div></div></div>
-    <section className="mt-7" aria-labelledby="faculty-heading"><h2 id="faculty-heading" className="text-xl font-bold">按学部浏览</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">Browse by faculty</p><div className="mt-4 grid grid-cols-2 gap-2">{facultyGroups.map((faculty) => <Button key={faculty.id} variant={faculty.id === activeFaculty.id ? "default" : "outline"} onClick={() => setFacultyId(faculty.id)} className="h-auto min-h-16 justify-start whitespace-normal px-3 py-3 text-left text-xs leading-5">{faculty.name}</Button>)}</div></section>
-    <section className="mt-7"><p className="text-xs font-bold uppercase text-primary">{activeFaculty.english}</p><h2 className="mt-2 text-2xl font-bold">{activeFaculty.name}</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">{activeFaculty.description}</p><div className="mt-5 divide-y divide-border border-y border-border">{activeFaculty.departments.map((department) => <div key={department.english} className="flex items-center gap-3 py-4"><span className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-xs font-bold text-primary">{String(activeFaculty.departments.indexOf(department) + 1).padStart(2, "0")}</span><div className="min-w-0 flex-1"><h3 className="text-sm font-bold">{department.name}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{department.english}</p></div><Button variant="ghost" size="icon" aria-label={`查看${department.name}教师`} onClick={() => openStaffDirectory(department.english)}><ExternalLink className="size-4" /></Button></div>)}</div></section>
-    <section className="mt-8 rounded-md bg-primary p-5 text-primary-foreground"><p className="text-xs font-bold uppercase text-accent">Live staff profiles</p><h2 className="mt-2 text-xl font-bold">查找教师官方 Profile</h2><p className="mt-2 text-xs leading-5 text-primary-foreground/80">输入英文姓名或研究领域，结果来自杜伦大学官网实时目录；完整职称、简介与研究成果以官网为准。</p><label className="relative mt-5 block"><Search className="absolute left-3 top-4 size-4 text-muted-foreground" /><input aria-label="输入教师姓名或研究领域" value={staffQuery} onChange={(event) => setStaffQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openStaffDirectory(staffQuery); }} className={cn(fieldClass, "pl-9")} placeholder="Name or research area" /></label><Button variant="gold" className="mt-3 w-full" onClick={() => openStaffDirectory(staffQuery)}>在官网查看实时资料 <ExternalLink className="size-4" /></Button><p className="mt-3 text-[11px] leading-5 text-primary-foreground/65">教师资料持续更新，不在小程序内复制或保存个人照片与联系方式。</p></section>
+    <section className="mt-7" aria-labelledby="staff-search-heading"><h2 id="staff-search-heading" className="text-xl font-bold">查询在校教师</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">支持姓名、职称、院系、学部和研究方向等任意关键词组合查询</p><label className="relative mt-4 block"><Search className="absolute left-3 top-4 size-4 text-muted-foreground" /><input aria-label="查询在校教师" value={staffQuery} maxLength={80} onChange={(event) => setStaffQuery(event.target.value)} className={cn(fieldClass, "pl-9 pr-10")} placeholder="例如：人工智能、法律、Professor" />{staffQuery && <Button type="button" variant="ghost" size="icon" aria-label="清空查询" onClick={() => setStaffQuery("")} className="absolute right-1 top-1 size-10"><X className="size-4" /></Button>}</label></section>
+    <section className="mt-6" aria-labelledby="faculty-heading"><h2 id="faculty-heading" className="sr-only">按学部筛选</h2><div className="flex gap-2 overflow-x-auto pb-2"><Button size="sm" variant={facultyId === "all" ? "default" : "outline"} onClick={() => setFacultyId("all")} className="shrink-0">全部学部</Button>{facultyGroups.map((faculty) => <Button key={faculty.id} size="sm" variant={faculty.id === facultyId ? "default" : "outline"} onClick={() => setFacultyId(faculty.id)} className="shrink-0">{faculty.name}</Button>)}</div>{activeFaculty && <div className="mt-4 border-l-2 border-primary pl-4"><p className="text-xs font-bold uppercase text-primary">{activeFaculty.english}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{activeFaculty.description}</p></div>}</section>
+    <section className="mt-7" aria-live="polite"><div className="flex items-baseline justify-between border-b border-border pb-3"><h2 className="text-xl font-bold">教师列表</h2><span className="text-xs text-muted-foreground">找到 {shownStaff.length} 位</span></div>{shownStaff.length > 0 ? <div className="divide-y divide-border">{shownStaff.map((staff) => <StaffResult key={staff.profileUrl} staff={staff} onSelect={() => setSelected(staff)} />)}</div> : <div className="py-12 text-center"><UsersRound className="mx-auto size-8 text-muted-foreground" /><h3 className="mt-4 text-base font-bold">未找到匹配的在校教师</h3><p className="mt-2 text-xs leading-5 text-muted-foreground">请尝试姓名、院系、职称或研究方向等其他关键词。</p></div>}</section>
+    <p className="mt-6 border-t border-border pt-4 text-[11px] leading-5 text-muted-foreground">当前收录 {durhamStaff.length} 位经杜伦大学官网公开 Profile 核验的在校教师，仅展示公开学术信息；资料以官网最新内容为准。</p>
+    {selected && <StaffProfileModal staff={selected} onClose={() => setSelected(null)} />}
   </div>;
+}
+
+function StaffResult({ staff, onSelect }: { staff: StaffProfile; onSelect: () => void }) {
+  const initials = staff.name.split(" ").map((part) => part[0]).join("").slice(0, 2);
+  return <Button type="button" variant="ghost" onClick={onSelect} className="h-auto w-full justify-start gap-3 rounded-none px-0 py-5 text-left"><span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary font-display text-sm font-bold text-primary">{initials}</span><span className="min-w-0 flex-1"><strong className="block text-base">{staff.name}</strong><span className="mt-1 block whitespace-normal text-xs font-normal leading-5 text-muted-foreground">{staff.titleZh} · {staff.departmentZh}</span><span className="mt-2 flex flex-wrap gap-1">{staff.interestsZh.slice(0, 3).map((item) => <span key={item} className="rounded-full bg-muted px-2 py-1 text-[10px] font-normal text-muted-foreground">{item}</span>)}</span></span><ChevronRight className="size-4 shrink-0 text-primary" /></Button>;
+}
+
+function StaffProfileModal({ staff, onClose }: { staff: StaffProfile; onClose: () => void }) {
+  return <div className="fixed inset-0 z-50 grid place-items-end bg-ink/70 sm:place-items-center" role="dialog" aria-modal="true" aria-labelledby="staff-profile-title"><div className="max-h-[82vh] w-full max-w-[520px] overflow-y-auto rounded-t-md bg-paper p-6 sm:rounded-md"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Durham staff profile</p><h2 id="staff-profile-title" className="mt-2 text-2xl font-bold">{staff.name}</h2><p className="mt-1 text-sm font-semibold text-primary">{staff.titleZh}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{staff.title}</p></div><Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="关闭教师资料"><X className="size-5" /></Button></div><dl className="mt-6 divide-y divide-border border-y border-border text-sm"><div className="py-4"><dt className="text-xs text-muted-foreground">所属学部</dt><dd className="mt-1 font-semibold">{facultyGroups.find((item) => item.id === staff.facultyId)?.name}</dd><dd className="mt-1 text-xs text-muted-foreground">{staff.faculty}</dd></div><div className="py-4"><dt className="text-xs text-muted-foreground">院系</dt><dd className="mt-1 font-semibold">{staff.departmentZh}</dd><dd className="mt-1 text-xs text-muted-foreground">{staff.department}</dd></div><div className="py-4"><dt className="text-xs text-muted-foreground">研究方向</dt><dd className="mt-2 flex flex-wrap gap-2">{staff.interestsZh.map((item) => <Tag key={item}>{item}</Tag>)}</dd><dd className="mt-3 text-xs leading-6 text-muted-foreground">{staff.interests.join(" · ")}</dd></div></dl><Button type="button" variant="outline" className="mt-5 w-full" onClick={() => window.open(staff.profileUrl, "_blank", "noopener,noreferrer")}>查看官网资料来源 <ExternalLink className="size-4" /></Button><p className="mt-3 text-[11px] leading-5 text-muted-foreground">小程序内信息用于快速查询，完整履历与最新任职状态以杜伦大学官网为准。</p></div></div>;
 }
 
 function Overseas({ onDetail, onConsult }: { onDetail: (id: number) => void; onConsult: () => void }) {

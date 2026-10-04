@@ -7,6 +7,9 @@ import campusLibrary from "@/assets/campus-library.jpg";
 import campusRiverside from "@/assets/campus-riverside.jpg";
 import brochure from "@/assets/durham-brochure-sample.pdf.asset.json";
 import logoDark from "@/assets/durham-logo-dark.svg.asset.json";
+import partnerLogo1 from "@/assets/partner-logo-1.png";
+import partnerLogo2 from "@/assets/partner-logo-2.png";
+import partnerLogo3 from "@/assets/partner-logo-3.png";
 import studentPortrait from "@/assets/student-portrait.jpg";
 import studentsStudy from "@/assets/students-study.jpg";
 import { Button } from "@/components/ui/button";
@@ -42,6 +45,13 @@ export const projects: Project[] = [
   mk({ id: 11, type: "本科直博", name: "杜伦大学理学本硕博连读项目", mode: "4+4", subject: "理工", highlight: "导师制 · 前沿研究", image: campusHero, pinned: true, majors: ["物理学", "化学", "地球科学"] }),
   mk({ id: 12, type: "本科直博", name: "杜伦大学人文研究型学位项目", mode: "3+4", subject: "人文社科", highlight: "研究导向 · 学术深造", image: campusCourtyard, majors: ["历史学", "考古学", "神学与宗教"] }),
   mk({ id: 13, type: "本科直博", name: "杜伦大学工程博士衔接项目", mode: "4+3", subject: "理工", highlight: "工程研究 · 产学结合", image: campusLibrary, majors: ["工程学", "能源", "计算机科学"] }),
+  // 中外合作办学项目（示例院校与校徽均为演示内容）
+  mk({ id: 14, type: "国际本科", name: "杜伦大学 × 华澜大学 2+2 金融合作项目", mode: "2+2", subject: "商科", highlight: "双校联合培养 · 金融方向", image: studentsStudy, partner: "华澜大学（示例院校）", partnerLogo: partnerLogo1, majors: ["金融学", "会计学", "国际经济与贸易"] }),
+  mk({ id: 15, type: "国际本科", name: "杜伦大学 × 宁州理工大学 3+1 计算机项目", mode: "3+1", subject: "理工", highlight: "中外双学位 · 计算机科学", image: campusLibrary, partner: "宁州理工大学（示例院校）", partnerLogo: partnerLogo2, majors: ["计算机科学", "软件工程", "人工智能"] }),
+  mk({ id: 16, type: "国际本科", name: "杜伦大学 × 江南文理学院 4+0 传媒项目", mode: "4+0", subject: "人文社科", highlight: "国内就读 · 英式课程", image: campusCourtyard, partner: "江南文理学院（示例院校）", partnerLogo: partnerLogo3, majors: ["媒体与传播", "英语文学", "文化创意产业"] }),
+  mk({ id: 17, type: "硕士项目", name: "杜伦大学 × 华澜大学 1+1 商科双硕士", mode: "1+1", subject: "商科", highlight: "一年国内 · 一年英国", image: studentPortrait, partner: "华澜大学（示例院校）", partnerLogo: partnerLogo1, majors: ["工商管理", "金融学", "商业分析"] }),
+  mk({ id: 18, type: "硕士项目", name: "杜伦大学 × 宁州理工大学 1+1 工程硕士", mode: "1+1", subject: "理工", highlight: "联合导师 · 双校学位", image: campusRiverside, partner: "宁州理工大学（示例院校）", partnerLogo: partnerLogo2, majors: ["电子工程", "能源工程", "数据科学"] }),
+  mk({ id: 19, type: "本科直博", name: "杜伦大学 × 江南文理学院 3+4 联培博士", mode: "3+4", subject: "理工", highlight: "本博贯通 · 联合科研", image: campusHero, partner: "江南文理学院（示例院校）", partnerLogo: partnerLogo3, majors: ["环境科学", "地球科学", "化学"] }),
 ];
 
 const types: ProjectType[] = ["国际本科", "硕士项目", "本科直博"];

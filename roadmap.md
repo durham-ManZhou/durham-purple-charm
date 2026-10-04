@@ -8,5 +8,5 @@
 - [x] Verify mobile presentation, interactions and current build
 - [x] Make every tab and detail transition return to the page top
 - [x] Add Durham's official 4-part academic structure and all 27 departments
-- [ ] Replace external staff search with an in-app, broad keyword-searchable directory of verified current Durham staff
+- [x] Replace external staff search with an in-app, broad keyword-searchable directory of verified current Durham staff
 - [x] Add a functional campus image carousel with captions and replaceable demo imagery

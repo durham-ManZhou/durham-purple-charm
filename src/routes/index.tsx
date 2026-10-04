@@ -166,9 +166,10 @@ function SchoolDetail({ view, onBack }: { view: Exclude<SchoolView, "index">; on
 }
 
 function FacultyDirectory() {
-  const [facultyId, setFacultyId] = useState(facultyGroups[0].id);
+  const [facultyId, setFacultyId] = useState("arts-humanities");
   const [staffQuery, setStaffQuery] = useState("");
-  const activeFaculty = facultyGroups.find((faculty) => faculty.id === facultyId) ?? facultyGroups[0];
+  const activeFaculty = facultyGroups.find((faculty) => faculty.id === facultyId);
+  if (!activeFaculty) return null;
   const openStaffDirectory = (query: string) => {
     const url = new URL("https://www.durham.ac.uk/search/");
     url.searchParams.set("searchStudioQuery", query || "*");

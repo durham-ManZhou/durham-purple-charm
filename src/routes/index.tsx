@@ -8,6 +8,9 @@ import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "re
 import { toast, Toaster } from "sonner";
 
 import campusHero from "@/assets/campus-hero.jpg";
+import campusCourtyard from "@/assets/campus-courtyard.jpg";
+import campusLibrary from "@/assets/campus-library.jpg";
+import campusRiverside from "@/assets/campus-riverside.jpg";
 import logoDark from "@/assets/durham-logo-dark.svg.asset.json";
 import logoWhite from "@/assets/durham-logo-white.svg.asset.json";
 import studentPortrait from "@/assets/student-portrait.jpg";
@@ -159,10 +162,35 @@ function SchoolDetail({ view, onBack }: { view: Exclude<SchoolView, "index">; on
   const data = {
     about: { title: "学校介绍", image: campusHero, body: "杜伦大学创立于 1832 年，是一所位于英国历史名城杜伦的学院制大学。学校将研究与教学融入紧密的学院社区。办学历史、荣誉与资质请以学校官网最新信息为准。" },
     faculty: { title: "师资力量", image: studentsStudy, body: "杜伦大学现有四个学部级学术分类、共 27 个院系。你可以按学部浏览院系，并通过学校官网实时教师目录查看姓名、职称、研究方向与完整个人介绍。" },
-    campus: { title: "校园环境", image: campusHero, body: "历史建筑、河畔景观与现代学习空间共同构成杜伦独特的学习环境。更多校园图集与图片说明待校方素材接入。" },
+    campus: { title: "校园环境", image: campusHero, body: "历史建筑、河畔景观与现代学习空间共同构成杜伦独特的学习环境。当前图集使用演示图片，后续可直接替换为校方正式素材。" },
     interviews: { title: "学生访谈", image: studentPortrait, body: "学生访谈将展示学生姓名、录取院校与真实感言，并支持文章和视频内容。正式访谈素材待校方提供。" },
   }[view];
-  return <article className="animate-rise"><div className="relative h-72"><img src={data.image} alt={data.title} className="size-full object-cover" /><Button size="icon" variant="secondary" onClick={onBack} aria-label="返回" className="absolute left-4 top-4 shadow-md"><ArrowLeft className="size-5" /></Button></div><div className="px-5 py-8"><p className="text-xs font-bold uppercase text-primary">About Durham</p><h1 className="mt-2 text-3xl font-bold">{data.title}</h1><p className="mt-5 text-sm leading-8 text-muted-foreground">{data.body}</p>{view === "faculty" && <FacultyDirectory />}{view === "interviews" && <div className="mt-7 rounded-md border border-border p-5"><p className="text-xs text-primary">学生故事</p><h2 className="mt-2 text-xl font-bold">在学院社区中找到归属</h2><p className="mt-2 text-sm text-muted-foreground">正式姓名、录取信息与视频待发布。</p></div>}</div></article>;
+  return <article className="animate-rise"><div className="relative h-72"><img src={data.image} alt={data.title} className="size-full object-cover" /><Button size="icon" variant="secondary" onClick={onBack} aria-label="返回" className="absolute left-4 top-4 shadow-md"><ArrowLeft className="size-5" /></Button></div><div className="px-5 py-8"><p className="text-xs font-bold uppercase text-primary">About Durham</p><h1 className="mt-2 text-3xl font-bold">{data.title}</h1><p className="mt-5 text-sm leading-8 text-muted-foreground">{data.body}</p>{view === "faculty" && <FacultyDirectory />}{view === "campus" && <CampusGallery />}{view === "interviews" && <div className="mt-7 rounded-md border border-border p-5"><p className="text-xs text-primary">学生故事</p><h2 className="mt-2 text-xl font-bold">在学院社区中找到归属</h2><p className="mt-2 text-sm text-muted-foreground">正式姓名、录取信息与视频待发布。</p></div>}</div></article>;
+}
+
+const campusScenes = [
+  { image: campusCourtyard, title: "学院庭院", caption: "古老石墙与开阔草坪，构成日常往返课堂的学院景致。" },
+  { image: campusLibrary, title: "图书馆", caption: "安静的阅览空间，为个人学习与资料查阅提供专注环境。" },
+  { image: campusRiverside, title: "河畔步道", caption: "沿威尔河漫步，可以从城市绿意中远望杜伦的历史天际线。" },
+  { image: campusHero, title: "校园建筑", caption: "历史建筑与现代大学生活在杜伦城中自然交融。" },
+] as const;
+
+function CampusGallery() {
+  const [active, setActive] = useState(0);
+  const scene = campusScenes[active] ?? campusScenes[0];
+  const show = (next: number) => setActive((next + campusScenes.length) % campusScenes.length);
+  return <section className="mt-8" aria-label="校园环境图集">
+    <div className="relative overflow-hidden rounded-md bg-muted">
+      <img key={scene.title} src={scene.image} alt={scene.title} loading="lazy" width={1200} height={900} className="aspect-[4/3] w-full animate-rise object-cover" />
+      <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,var(--ink),transparent)] px-5 pb-5 pt-16 text-primary-foreground">
+        <div className="flex items-end justify-between gap-4"><div><h2 className="text-xl font-bold">{scene.title}</h2><p className="mt-1 text-xs leading-5 text-primary-foreground/80">{scene.caption}</p></div><span className="shrink-0 text-xs font-semibold">{String(active + 1).padStart(2, "0")} / {String(campusScenes.length).padStart(2, "0")}</span></div>
+      </div>
+      <Button type="button" size="icon" variant="secondary" onClick={() => show(active - 1)} aria-label="上一张" className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full shadow-md"><ArrowLeft className="size-4" /></Button>
+      <Button type="button" size="icon" variant="secondary" onClick={() => show(active + 1)} aria-label="下一张" className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full shadow-md"><ArrowRight className="size-4" /></Button>
+    </div>
+    <div className="mt-3 grid grid-cols-4 gap-2" aria-label="选择校园图片">{campusScenes.map((item, index) => <Button key={item.title} type="button" variant="ghost" aria-label={`查看${item.title}`} aria-pressed={active === index} onClick={() => show(index)} className={cn("h-auto overflow-hidden rounded-md border p-0", active === index ? "border-primary ring-2 ring-primary/20" : "border-transparent opacity-70")}><img src={item.image} alt="" loading="lazy" width={240} height={180} className="aspect-[4/3] w-full object-cover" /></Button>)}</div>
+    <p className="mt-3 text-[11px] leading-5 text-muted-foreground">图片为功能演示素材，正式上线前请替换为校方授权图片。</p>
+  </section>;
 }
 
 function FacultyDirectory() {

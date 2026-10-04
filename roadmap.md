@@ -9,3 +9,4 @@
 - [x] Make every tab and detail transition return to the page top
 - [x] Add Durham's official 4-part academic structure and all 27 departments
 - [x] Add bilingual faculty browsing with live official staff-profile search
+- [x] Add a functional campus image carousel with captions and replaceable demo imagery

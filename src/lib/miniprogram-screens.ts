@@ -1,11 +1,12 @@
 export type MainTab = "school" | "overseas" | "contact";
-export type SchoolView = "index" | "about" | "faculty" | "campus" | "interviews";
+export type SchoolView = "index" | "about" | "faculty" | "campus" | "interviews" | "website";
 export type ContactMode = "lead" | "info" | "studio" | "booking" | "event";
 export type ProjectType = "国际本科" | "硕士项目" | "本科直博";
 
 export type ScreenId =
   | "ad"
   | "school-home"
+  | "website"
   | "school-about"
   | "school-faculty"
   | "school-staff"
@@ -35,6 +36,7 @@ export type ScreenCard = {
 export const SCREEN_CATALOG: ScreenCard[] = [
   { id: "ad", group: "启动", title: "每日主推弹窗", blurb: "每日首次进入展示，关闭后当日不再出现" },
   { id: "school-home", group: "学校相关", title: "学校首页", blurb: "Banner 与四个入口、官网直达" },
+  { id: "website", group: "学校相关", title: "学校官网", blurb: "小程序内 web-view 打开官网" },
   { id: "school-about", group: "学校相关", title: "学校介绍", blurb: "简介、历史与荣誉资质" },
   { id: "school-faculty", group: "学校相关", title: "师资力量", blurb: "学部筛选与在校教师检索" },
   { id: "school-staff", group: "学校相关", title: "教师详情", blurb: "公开资料摘要与官网 Profile" },
@@ -59,7 +61,7 @@ export const SCREEN_CATALOG: ScreenCard[] = [
   { id: "contact-info", group: "联系我们", title: "联系学校", blurb: "地址、电话、邮箱、客服" },
   { id: "contact-studio", group: "联系我们", title: "AI Hub", blurb: "技术支持与商务合作" },
   { id: "contact-booking", group: "联系我们", title: "预约到校", blurb: "分时段名额与取消预约" },
-  { id: "contact-event", group: "联系我们", title: "校园开放日", blurb: "二期报名入口占位" },
+  { id: "contact-event", group: "联系我们", title: "校园开放日", blurb: "活动信息与报名表" },
   { id: "consult", group: "全局", title: "微信客服", blurb: "悬浮咨询入口与会话占位" },
   { id: "privacy", group: "部署", title: "隐私保护指引", blurb: "微信小程序上架所需用户协议" },
   { id: "deploy", group: "部署", title: "微信部署清单", blurb: "业务域名、AppID、审核与上传" },
@@ -109,6 +111,15 @@ export function navForScreen(id: ScreenId): NavSnapshot {
         screen: id,
         tab: "school",
         schoolView: "index",
+        overseasType: "国际本科",
+        contactMode: "lead",
+        ...closedOverlays,
+      };
+    case "website":
+      return {
+        screen: id,
+        tab: "school",
+        schoolView: "website",
         overseasType: "国际本科",
         contactMode: "lead",
         ...closedOverlays,
@@ -309,6 +320,7 @@ export function navTitle(state: NavSnapshot): string {
     faculty: "师资力量",
     campus: "校园环境",
     interviews: "学生访谈",
+    website: "学校官网",
   };
   return school[state.schoolView];
 }

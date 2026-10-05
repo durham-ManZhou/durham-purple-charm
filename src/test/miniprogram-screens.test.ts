@@ -14,6 +14,7 @@ describe("miniprogram screen catalog", () => {
     expect(SCREEN_CATALOG.map((item) => item.id)).toEqual([
       "ad",
       "school-home",
+      "website",
       "school-about",
       "school-faculty",
       "school-staff",

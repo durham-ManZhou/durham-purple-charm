@@ -1,0 +1,16 @@
+{
+  "appid": "touristappid",
+  "projectname": "durham-admissions",
+  "compileType": "miniprogram",
+  "libVersion": "3.7.0",
+  "packOptions": { "ignore": [], "include": [] },
+  "setting": {
+    "es6": true,
+    "minified": true,
+    "urlCheck": true,
+    "coverView": true,
+    "lazyloadPlaceholderEnable": false,
+    "skylineRenderEnable": false,
+    "showShadowRootInInspector": false
+  }
+}

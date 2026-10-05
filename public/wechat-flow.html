@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>招生小程序技术流程</title>
+    <style>
+      :root {
+        --ink: #1d1830;
+        --paper: #f7f4fb;
+        --line: #d7cfe3;
+        --purple: #7e317b;
+        --purple-soft: #f0e4ef;
+        --gold: #b8892d;
+        --green: #2f6b4f;
+        --green-soft: #e7f3ec;
+        --blue: #2f4f7a;
+        --blue-soft: #e8eef7;
+        --warn: #8a4b16;
+        --warn-soft: #f8eee3;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "PingFang SC", "Noto Sans SC", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, #efe4f3 0%, transparent 40%),
+          linear-gradient(180deg, #fbf9fd, #f3eef8);
+      }
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 64px;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        letter-spacing: 0.02em;
+      }
+      .lead {
+        margin: 12px 0 28px;
+        max-width: 46rem;
+        line-height: 1.7;
+        color: #5a5268;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 28px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: white;
+        font-size: 13px;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+      .flow {
+        display: grid;
+        gap: 18px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        gap: 14px;
+        align-items: stretch;
+      }
+      @media (max-width: 760px) {
+        .row { grid-template-columns: 1fr; }
+      }
+      .phase {
+        border-radius: 18px;
+        padding: 16px;
+        color: white;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        font-weight: 700;
+        min-height: 100%;
+      }
+      .phase small {
+        display: block;
+        margin-top: 6px;
+        font-weight: 500;
+        opacity: 0.9;
+        font-size: 12px;
+      }
+      .p1 { background: var(--blue); }
+      .p2 { background: var(--purple); }
+      .p3 { background: var(--green); }
+      .p4 { background: var(--gold); color: #221607; }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+      @media (max-width: 900px) {
+        .cards { grid-template-columns: 1fr; }
+      }
+      .card {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 10px 30px rgb(40 20 60 / 4%);
+      }
+      .card h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+      }
+      .card p, .card li {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.65;
+        color: #534b63;
+      }
+      .card ul {
+        margin: 8px 0 0;
+        padding-left: 1.1rem;
+      }
+      .who {
+        display: inline-block;
+        margin-bottom: 8px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .yi { background: var(--blue-soft); color: var(--blue); }
+      .jia { background: var(--warn-soft); color: var(--warn); }
+      .both { background: var(--purple-soft); color: var(--purple); }
+      .arrow {
+        display: grid;
+        place-items: center;
+        color: var(--purple);
+        font-size: 22px;
+        font-weight: 700;
+        opacity: 0.7;
+      }
+      .stack {
+        display: grid;
+        gap: 12px;
+      }
+      .pipe {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        gap: 10px;
+        align-items: center;
+      }
+      @media (max-width: 900px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .arrow { transform: rotate(90deg); }
+      }
+      .box {
+        border-radius: 18px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        background: white;
+        min-height: 120px;
+      }
+      .box.soft-purple { background: var(--purple-soft); border-color: #e0c8dc; }
+      .box.soft-green { background: var(--green-soft); border-color: #cfe3d8; }
+      .box.soft-blue { background: var(--blue-soft); border-color: #cfdced; }
+      .box h3 { margin: 0 0 8px; font-size: 15px; }
+      .note {
+        margin-top: 28px;
+        padding: 16px 18px;
+        border-radius: 18px;
+        background: white;
+        border: 1px dashed var(--line);
+        line-height: 1.7;
+        font-size: 14px;
+        color: #534b63;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>招生小程序：从开发到上线流程</h1>
+      <p class="lead">
+        页面用 Lovable / Cursor 做；小程序只做一个壳去打开网页；数据和微信能力走腾讯云开发。
+        不是把整份网页代码翻译成小程序页面。
+      </p>
+
+      <div class="legend">
+        <span class="chip"><span class="dot" style="background:var(--blue)"></span>乙方（你）负责</span>
+        <span class="chip"><span class="dot" style="background:var(--gold)"></span>甲方负责</span>
+        <span class="chip"><span class="dot" style="background:var(--purple)"></span>两边一起</span>
+        <span class="chip"><span class="dot" style="background:var(--green)"></span>正式上线结构</span>
+      </div>
+
+      <div class="flow">
+        <section class="row">
+          <div class="phase p1">阶段 1<small>现在就能做</small></div>
+          <div class="cards">
+            <article class="card">
+              <span class="who yi">乙方</span>
+              <h3>1. 改界面</h3>
+              <p>在 Lovable 或 Cursor 里改学校介绍、项目、表单等页面。代码在 GitHub 仓库的 <code>src/</code>。</p>
+            </article>
+            <article class="card">
+              <span class="who yi">乙方</span>
+              <h3>2. 浏览器里预览</h3>
+              <p>打开 Demo / 预览网址，点页面、填表、看交互。这一步还不需要微信开发者工具。</p>
+            </article>
+            <article class="card">
+              <span class="who jia">甲方</span>
+              <h3>3. 准备资质</h3>
+              <ul>
+                <li>小程序 AppID</li>
+                <li>把你加成开发者</li>
+                <li>备案域名</li>
+                <li>同意开通云开发</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <div class="arrow">↓</div>
+
+        <section class="row">
+          <div class="phase p2">阶段 2<small>接到微信里</small></div>
+          <div class="stack">
+            <div class="pipe">
+              <div class="box soft-blue">
+                <span class="who yi">乙方</span>
+                <h3>发布网页</h3>
+                <p>把 Lovable 做好的页面发布成 <strong>https 网址</strong>（甲方备案域名，或云开发静态托管）。</p>
+              </div>
+              <div class="arrow">→</div>
+              <div class="box soft-purple">
+                <span class="who both">一起</span>
+                <h3>配置业务域名</h3>
+                <p>在微信公众平台把该域名加入业务域名，并放好校验文件。否则小程序打不开网页。</p>
+              </div>
+              <div class="arrow">→</div>
+              <div class="box soft-green">
+                <span class="who yi">乙方</span>
+                <h3>打开小程序壳</h3>
+                <p>微信开发者工具只导入仓库里的 <code>miniprogram/</code>，把 <code>h5Url</code> 填成上面的网址。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="arrow">↓</div>
+
+        <section class="row">
+          <div class="phase p3">阶段 3<small>正式运行结构</small></div>
+          <div class="stack">
+            <div class="pipe">
+              <div class="box soft-purple">
+                <h3>用户打开小程序</h3>
+                <p>看到的是微信里的入口、标题栏、权限弹窗。</p>
+              </div>
+              <div class="arrow">→</div>
+              <div class="box soft-blue">
+                <h3>壳加载网址</h3>
+                <p><code>web-view</code> 打开你的 https 页面。房间装修仍是 Lovable 做的那套。</p>
+              </div>
+              <div class="arrow">→</div>
+              <div class="box soft-green">
+                <h3>数据和微信能力</h3>
+                <p>线索 / 预约进<strong>腾讯云开发</strong>；手机号、订阅消息、客服用 <strong>wx 接口</strong>。</p>
+              </div>
+            </div>
+            <div class="cards">
+              <article class="card">
+                <h3>界面放哪？</h3>
+                <p>https 网页（Lovable / Cursor 维护，GitHub 同步）</p>
+              </article>
+              <article class="card">
+                <h3>数据放哪？</h3>
+                <p>甲方的腾讯云开发（数据库、云函数）</p>
+              </article>
+              <article class="card">
+                <h3>敏感能力放哪？</h3>
+                <p>小程序原生能力：登录、手机号、订阅消息、客服</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <div class="arrow">↓</div>
+
+        <section class="row">
+          <div class="phase p4">阶段 4<small>上线前检查</small></div>
+          <div class="cards">
+            <article class="card">
+              <span class="who jia">甲方</span>
+              <h3>合规与支付</h3>
+              <ul>
+                <li>类目与资质</li>
+                <li>隐私保护指引</li>
+                <li>云开发付费（正式发布后）</li>
+                <li>客服与订阅消息模板</li>
+              </ul>
+            </article>
+            <article class="card">
+              <span class="who yi">乙方</span>
+              <h3>联调与提交</h3>
+              <ul>
+                <li>真机预览填表 / 预约</li>
+                <li>确认域名与云开发白名单</li>
+                <li>协助上传代码</li>
+              </ul>
+            </article>
+            <article class="card">
+              <span class="who jia">甲方管理员</span>
+              <h3>审核发布</h3>
+              <p>管理员在微信公众平台提交审核并发布。之后用户搜索 / 扫码就能用。</p>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="note">
+        <strong>不要这样做：</strong>把整个 GitHub 仓库导入微信开发者工具。<br />
+        <strong>要这样做：</strong>网页继续在 Lovable / Cursor 改；微信工具只打开 <code>miniprogram/</code> 这个壳；正式数据放云开发。
+      </div>
+    </main>
+  </body>
+</html>

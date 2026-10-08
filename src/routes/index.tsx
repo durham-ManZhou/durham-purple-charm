@@ -8,12 +8,8 @@ import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } 
 import { toast, Toaster } from "sonner";
 
 import campusHero from "@/assets/campus-hero.jpg";
-import campusCourtyard from "@/assets/campus-courtyard.jpg";
-import campusLibrary from "@/assets/campus-library.jpg";
-import campusRiverside from "@/assets/campus-riverside.jpg";
 import logoDark from "@/assets/durham-logo-dark.svg.asset.json";
 import logoWhite from "@/assets/durham-logo-white.svg.asset.json";
-import interviewVideo from "@/assets/student-interview-demo.mp4.asset.json";
 import studentPortrait from "@/assets/student-portrait.jpg";
 import studentsStudy from "@/assets/students-study.jpg";
 import { Button } from "@/components/ui/button";
@@ -21,7 +17,7 @@ import type { StaffProfile } from "@/data/durham-staff";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Overseas, ProjectDetail } from "@/components/overseas";
-import { useSiteContent, type StudentStory } from "@/lib/site-content";
+import { useSiteContent, type LaunchAdContent, type StudentStory } from "@/lib/site-content";
 import { LiveProfileSections, useStaffDetail, useStaffSearch, type StaffCard } from "@/components/staff-live";
 
 export const Route = createFileRoute("/")({
@@ -343,7 +339,7 @@ function CancelBooking({ onCancelled }: { onCancelled: () => void }) {
 }
 function OpenDay() { return <div><SectionHeading eyebrow="Coming next" title="校园开放日" description="活动报名为二期功能。" /><div className="mt-6 overflow-hidden rounded-md border border-border"><img src={campusHero} alt="杜伦大学校园开放日" className="aspect-[16/9] w-full object-cover" /><div className="p-5"><p className="text-xs font-semibold text-primary">活动信息待发布</p><h2 className="mt-2 text-xl font-bold">校园开放日与招生说明会</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">活动名称、时间、地点与亮点将在校方确认后展示。</p><Button className="mt-5 w-full" disabled>报名暂未开放</Button></div></div></div>; }
 
-function LaunchAd({ ad, onClose, onOpen }: { ad: ReturnType<typeof useSiteContent<"launch_ad">>; onClose: () => void; onOpen: () => void }) { return <div className="fixed inset-0 z-50 grid place-items-center bg-ink/75 p-6" role="dialog" aria-modal="true" aria-label="主推项目"><div className="relative w-full max-w-[340px] overflow-hidden rounded-md bg-primary shadow-2xl"><img src={ad.image} alt={ad.title} className="aspect-[3/4] w-full object-cover" /><div className="absolute inset-0 bg-[linear-gradient(to_top,var(--primary)_2%,transparent_70%)]" /><Button size="icon" variant="secondary" onClick={onClose} aria-label="关闭广告" className="absolute right-3 top-3 rounded-full"><X className="size-5" /></Button><div className="absolute inset-x-0 bottom-0 p-6 text-primary-foreground"><img src={logoWhite.url} alt="Durham University 官方反白标志" className="h-10 w-auto max-w-[220px] object-contain object-left" /><p className="mt-6 text-xs font-bold text-accent">{ad.label}</p><h2 className="mt-2 text-3xl font-bold">{ad.title}</h2><p className="mt-2 text-sm text-primary-foreground/80">{ad.subtitle}</p><Button variant="gold" className="mt-5 w-full" onClick={onOpen}>查看项目详情 <ArrowRight className="size-4" /></Button></div></div></div>; }
+function LaunchAd({ ad, onClose, onOpen }: { ad: LaunchAdContent; onClose: () => void; onOpen: () => void }) { return <div className="fixed inset-0 z-50 grid place-items-center bg-ink/75 p-6" role="dialog" aria-modal="true" aria-label="主推项目"><div className="relative w-full max-w-[340px] overflow-hidden rounded-md bg-primary shadow-2xl"><img src={ad.image} alt={ad.title} className="aspect-[3/4] w-full object-cover" /><div className="absolute inset-0 bg-[linear-gradient(to_top,var(--primary)_2%,transparent_70%)]" /><Button size="icon" variant="secondary" onClick={onClose} aria-label="关闭广告" className="absolute right-3 top-3 rounded-full"><X className="size-5" /></Button><div className="absolute inset-x-0 bottom-0 p-6 text-primary-foreground"><img src={logoWhite.url} alt="Durham University 官方反白标志" className="h-10 w-auto max-w-[220px] object-contain object-left" /><p className="mt-6 text-xs font-bold text-accent">{ad.label}</p><h2 className="mt-2 text-3xl font-bold">{ad.title}</h2><p className="mt-2 text-sm text-primary-foreground/80">{ad.subtitle}</p><Button variant="gold" className="mt-5 w-full" onClick={onOpen}>查看项目详情 <ArrowRight className="size-4" /></Button></div></div></div>; }
 function ConsultModal({ onClose, onForm }: { onClose: () => void; onForm: () => void }) { return <div className="fixed inset-0 z-50 grid place-items-end bg-ink/70 sm:place-items-center" role="dialog" aria-modal="true" aria-label="微信客服"><div className="w-full max-w-[520px] rounded-t-md bg-paper p-6 sm:rounded-md"><div className="flex items-center justify-between"><img src={logoDark.url} alt="Durham University 官方标志" className="h-10 w-auto max-w-[210px]" /><Button variant="ghost" size="icon" onClick={onClose} aria-label="关闭"><X className="size-5" /></Button></div><div className="mt-6 rounded-md bg-muted p-5"><h2 className="font-bold">直接咨询</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">正式微信客服会话待小程序主体接入；你可以先填写意向信息。</p></div><Button className="mt-4 w-full" onClick={onForm}>填写意向信息 <ArrowRight className="size-4" /></Button></div></div>; }
 
 function PageIntro({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) { return <section className="bg-primary px-5 py-9 text-primary-foreground"><p className="text-xs font-bold uppercase text-accent">{eyebrow}</p><h1 className="mt-2 text-4xl font-bold">{title}</h1><p className="mt-3 text-sm leading-6 text-primary-foreground/80">{text}</p></section>; }

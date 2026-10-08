@@ -8,19 +8,16 @@ import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } 
 import { toast, Toaster } from "sonner";
 
 import campusHero from "@/assets/campus-hero.jpg";
-import campusCourtyard from "@/assets/campus-courtyard.jpg";
-import campusLibrary from "@/assets/campus-library.jpg";
-import campusRiverside from "@/assets/campus-riverside.jpg";
 import logoDark from "@/assets/durham-logo-dark.svg.asset.json";
 import logoWhite from "@/assets/durham-logo-white.svg.asset.json";
-import interviewVideo from "@/assets/student-interview-demo.mp4.asset.json";
 import studentPortrait from "@/assets/student-portrait.jpg";
 import studentsStudy from "@/assets/students-study.jpg";
 import { Button } from "@/components/ui/button";
 import type { StaffProfile } from "@/data/durham-staff";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { Overseas, ProjectDetail, projects } from "@/components/overseas";
+import { Overseas, ProjectDetail } from "@/components/overseas";
+import { useSiteContent, type LaunchAdContent, type StudentStory } from "@/lib/site-content";
 import { LiveProfileSections, useStaffDetail, useStaffSearch, type StaffCard } from "@/components/staff-live";
 
 export const Route = createFileRoute("/")({
@@ -37,8 +34,6 @@ export const Route = createFileRoute("/")({
 
 type MainTab = "school" | "overseas" | "contact";
 type SchoolView = "index" | "about" | "faculty" | "campus" | "interviews";
-type StoryContent = { id: string; type: "图文" | "视频"; title: string; image: string; video?: string };
-type StudentStory = { id: number; name: string; offer: string; quote: string; image: string; contents: StoryContent[] };
 type FacultyGroup = { id: string; name: string; english: string; description: string; departments: { name: string; english: string }[] };
 
 const facultyGroups: FacultyGroup[] = [
@@ -104,23 +99,12 @@ const facultyGroups: FacultyGroup[] = [
 ];
 
 
-const studentStories: StudentStory[] = [
-  { id: 1, name: "学生 A", offer: "杜伦大学 · 商科方向", quote: "学院社区让我很快找到学习节奏。", image: studentPortrait, contents: [
-    { id: "1-article", type: "图文", title: "从申请准备到融入学院生活", image: studentPortrait },
-    { id: "1-video", type: "视频", title: "我的杜伦学习日常", image: campusRiverside, video: interviewVideo.url },
-  ] },
-  { id: 2, name: "学生 B", offer: "杜伦大学 · 人文方向", quote: "小班讨论让我更敢表达自己的观点。", image: studentsStudy, contents: [
-    { id: "2-article", type: "图文", title: "在杜伦学习人文是一种怎样的体验", image: studentsStudy },
-  ] },
-  { id: 3, name: "学生 C", offer: "杜伦大学 · 理工方向", quote: "校园、课堂和研究机会都超出预期。", image: campusCourtyard, contents: [
-    { id: "3-video", type: "视频", title: "一分钟走进我的杜伦学习日常", image: campusRiverside, video: interviewVideo.url },
-  ] },
-];
-
 const fieldClass = "min-h-12 w-full rounded-md border border-input bg-paper px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
 const scrollToAppTop = () => window.scrollTo({ top: 0, behavior: "instant" });
 
 function AdmissionsApp() {
+  const projects = useSiteContent("projects");
+  const ad = useSiteContent("launch_ad");
   const [tab, setTab] = useState<MainTab>("school");
   const [schoolView, setSchoolView] = useState<SchoolView>("index");
   const [detailId, setDetailId] = useState<number | null>(null);
@@ -139,14 +123,14 @@ function AdmissionsApp() {
       <TopBar />
       <main className="pb-24">
         {tab === "school" && <School view={schoolView} onView={changeSchoolView} onOverseas={() => changeTab("overseas")} onContact={() => changeTab("contact")} />}
-        {tab === "overseas" && (detailId ? <ProjectDetail project={projects.find((item) => item.id === detailId)} onBack={() => { setDetailId(null); requestAnimationFrame(scrollToAppTop); }} onConsult={() => setConsultOpen(true)} /> : <Overseas onDetail={openProject} onConsult={() => setConsultOpen(true)} scrollTop={scrollToAppTop} />)}
+        {tab === "overseas" && (detailId ? <ProjectDetail project={projects.find((item) => item.id === detailId)} onBack={() => { setDetailId(null); requestAnimationFrame(scrollToAppTop); }} onConsult={() => setConsultOpen(true)} /> : <Overseas projects={projects} onDetail={openProject} onConsult={() => setConsultOpen(true)} scrollTop={scrollToAppTop} />)}
         {tab === "contact" && <Contact />}
       </main>
       <Button aria-label="微信客服" title="微信客服" size="icon" onClick={() => setConsultOpen(true)} className="fixed bottom-22 right-[max(1rem,calc(50%-244px))] z-30 rounded-full shadow-lg"><Headphones className="size-5" /></Button>
       <BottomNav tab={tab} onChange={changeTab} />
     </div>
     {consultOpen && <ConsultModal onClose={() => setConsultOpen(false)} onForm={() => { setConsultOpen(false); changeTab("contact"); }} />}
-    {adOpen && <LaunchAd onClose={closeAd} onOpen={() => openProject(1)} />}
+    {adOpen && ad.enabled && <LaunchAd ad={ad} onClose={closeAd} onOpen={() => openProject(ad.projectId)} />}
     <Toaster position="top-center" richColors />
   </div>;
 }
@@ -184,24 +168,21 @@ function SchoolDetail({ view, onBack }: { view: Exclude<SchoolView, "index">; on
 }
 
 function StudentStories({ onSelect }: { onSelect: (story: StudentStory) => void }) {
+  const studentStories = useSiteContent("student_stories");
   return <section className="mt-8" aria-label="学生访谈列表"><div className="space-y-4">{studentStories.map((story) => <Button key={story.id} type="button" variant="ghost" onClick={() => onSelect(story)} className="h-auto w-full items-stretch justify-start overflow-hidden rounded-md border border-border p-0 text-left shadow-sm"><span className="relative w-28 shrink-0"><img src={story.image} alt={`${story.name}访谈封面`} className="absolute inset-0 size-full object-cover" /></span><span className="min-w-0 flex-1 p-4"><span className="flex flex-wrap gap-1.5">{story.contents.map((content) => <span key={content.id} className="inline-flex items-center gap-1 rounded-sm bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">{content.type === "图文" ? <FileText className="size-3" /> : <Play className="size-3 fill-current" />}{content.type}</span>)}</span><strong className="mt-2 block text-base">{story.name}</strong><span className="mt-1 block whitespace-normal text-xs font-semibold text-foreground">录取院校：{story.offer}</span><span className="mt-2 line-clamp-2 block whitespace-normal text-xs font-normal leading-5 text-muted-foreground">“{story.quote}”</span></span><ChevronRight className="mr-3 mt-4 size-4 shrink-0 text-primary" /></Button>)}</div><p className="mt-5 text-[11px] leading-5 text-muted-foreground">以上为功能演示内容，并非真实学生访谈；正式上线前可替换为校方审核后的图文、视频和学生资料。</p></section>;
 }
 
 function StudentStoryDetail({ story, onBack }: { story: StudentStory; onBack: () => void }) {
-  return <article className="animate-rise pb-24"><div className="relative"><img src={story.image} alt={`${story.name}学生访谈`} className="aspect-[4/3] w-full object-cover" /><Button type="button" size="icon" variant="secondary" onClick={onBack} aria-label="返回访谈列表" className="absolute left-4 top-4 z-10 shadow-md"><ArrowLeft className="size-5" /></Button></div><div className="px-5 py-8"><p className="text-xs font-bold text-primary">学生访谈 · 功能演示</p><h1 className="mt-2 text-3xl font-bold leading-tight">{story.name}</h1><div className="mt-5 border-l-2 border-primary pl-4"><p className="text-xs text-muted-foreground">录取院校：{story.offer}</p><p className="mt-3 text-sm leading-6 text-foreground">“{story.quote}”</p></div><div className="mt-9 space-y-10">{story.contents.map((content) => <section key={content.id} aria-label={`${content.type}：${content.title}`}><div className="mb-3 flex items-center gap-2 text-primary">{content.type === "图文" ? <FileText className="size-4" /> : <Play className="size-4 fill-current" />}<span className="text-xs font-bold">{content.type}</span></div><h2 className="text-xl font-bold leading-snug">{content.title}</h2>{content.type === "视频" && content.video ? <video src={content.video} poster={content.image} controls playsInline className="mt-4 aspect-video w-full rounded-md bg-ink object-cover" aria-label={`${story.name}访谈视频`} /> : <div className="mt-4"><img src={content.image} alt={content.title} className="aspect-[4/3] w-full rounded-md object-cover" /><div className="mt-5 space-y-4 text-sm leading-8 text-muted-foreground"><p>这是一篇用于打通学生访谈阅读流程的演示图文。页面已支持访谈图片、学生信息、录取院校、感言与正文内容展示。</p><p>正式上线时，可将这里替换为经过学生授权和校方审核的真实访谈，包括申请准备、课程体验、学院生活与升学建议。</p></div></div>}{content.type === "视频" && <p className="mt-3 text-sm leading-7 text-muted-foreground">当前为可播放的演示视频，用于验证小程序内播放、暂停与进度控制。</p>}</section>)}</div><p className="mt-10 border-t border-border pt-4 text-[11px] leading-5 text-muted-foreground">演示姓名、录取方向与感言均为占位内容，不代表真实学生信息。</p></div></article>;
+  return <article className="animate-rise pb-24"><div className="relative"><img src={story.image} alt={`${story.name}学生访谈`} className="aspect-[4/3] w-full object-cover" /><Button type="button" size="icon" variant="secondary" onClick={onBack} aria-label="返回访谈列表" className="absolute left-4 top-4 z-10 shadow-md"><ArrowLeft className="size-5" /></Button></div><div className="px-5 py-8"><p className="text-xs font-bold text-primary">学生访谈 · 功能演示</p><h1 className="mt-2 text-3xl font-bold leading-tight">{story.name}</h1><div className="mt-5 border-l-2 border-primary pl-4"><p className="text-xs text-muted-foreground">录取院校：{story.offer}</p><p className="mt-3 text-sm leading-6 text-foreground">“{story.quote}”</p></div><div className="mt-9 space-y-10">{story.contents.map((content) => <section key={content.id} aria-label={`${content.type}：${content.title}`}><div className="mb-3 flex items-center gap-2 text-primary">{content.type === "图文" ? <FileText className="size-4" /> : <Play className="size-4 fill-current" />}<span className="text-xs font-bold">{content.type}</span></div><h2 className="text-xl font-bold leading-snug">{content.title}</h2>{content.type === "视频" && content.video ? <video src={content.video} poster={content.image} controls playsInline className="mt-4 aspect-video w-full rounded-md bg-ink object-cover" aria-label={`${story.name}访谈视频`} /> : <div className="mt-4"><img src={content.image} alt={content.title} className="aspect-[4/3] w-full rounded-md object-cover" /><div className="mt-5 space-y-4 text-sm leading-8 text-muted-foreground">{(content.body ?? "").split(/\n+/).filter(Boolean).map((para, i) => <p key={i}>{para}</p>)}</div></div>}{content.type === "视频" && <p className="mt-3 text-sm leading-7 text-muted-foreground">当前为可播放的演示视频，用于验证小程序内播放、暂停与进度控制。</p>}</section>)}</div><p className="mt-10 border-t border-border pt-4 text-[11px] leading-5 text-muted-foreground">演示姓名、录取方向与感言均为占位内容，不代表真实学生信息。</p></div></article>;
 }
 
-const campusScenes = [
-  { image: campusCourtyard, title: "学院庭院", caption: "古老石墙与开阔草坪，构成日常往返课堂的学院景致。" },
-  { image: campusLibrary, title: "图书馆", caption: "安静的阅览空间，为个人学习与资料查阅提供专注环境。" },
-  { image: campusRiverside, title: "河畔步道", caption: "沿威尔河漫步，可以从城市绿意中远望杜伦的历史天际线。" },
-  { image: campusHero, title: "校园建筑", caption: "历史建筑与现代大学生活在杜伦城中自然交融。" },
-] as const;
+
 
 function CampusGallery() {
+  const campusScenes = useSiteContent("campus_scenes");
   const [active, setActive] = useState(0);
   const pointerStartX = useRef<number | null>(null);
-  const scene = campusScenes[active] ?? campusScenes[0];
+  const scene = campusScenes[active] ?? campusScenes[0] ?? { image: "", title: "", caption: "" };
   const show = (next: number) => setActive((next + campusScenes.length) % campusScenes.length);
   useEffect(() => {
     const timer = window.setInterval(() => setActive((current) => (current + 1) % campusScenes.length), 4000);
@@ -261,8 +242,8 @@ function LeadForm() {
   return <form onSubmit={submit} className="space-y-5"><SectionHeading eyebrow="Enquiry form" title="意向信息填写表" /><Field label="姓名 *"><input name="name" required minLength={2} maxLength={20} className={fieldClass} /></Field><Field label="手机号 *"><input name="phone" required pattern="1[3-9][0-9]{9}" inputMode="tel" className={fieldClass} placeholder="11 位手机号" /></Field><Field label="当前学历 *"><select name="education" required defaultValue="" className={fieldClass}><option value="" disabled>请选择</option>{["高中", "高二", "大专", "本科", "其他"].map((item) => <option key={item}>{item}</option>)}</select></Field><Field label="意向项目 *"><select name="program" required defaultValue="" className={fieldClass}><option value="" disabled>请选择</option>{["国际本科", "硕士", "本科直博", "暂不确定"].map((item) => <option key={item}>{item}</option>)}</select></Field><Field label="意向国家（可多选）"><div className="flex flex-wrap gap-2">{["英国", "澳大利亚", "美国", "加拿大", "新加坡", "其他"].map((item) => <label key={item} className={cn("rounded-full border px-3 py-2 text-xs", countries.includes(item) ? "border-primary bg-secondary text-primary" : "border-border")}><input type="checkbox" className="sr-only" checked={countries.includes(item)} onChange={() => setCountries((old) => old.includes(item) ? old.filter((value) => value !== item) : [...old, item])} />{item}</label>)}</div></Field><div className="grid grid-cols-2 gap-3"><Field label="预计入学年份"><select name="year" className={fieldClass}><option>2026</option><option>2027</option><option>暂不确定</option></select></Field><Field label="预算区间"><select name="budget" className={fieldClass}><option>20 万内</option><option>20-30 万</option><option>30 万以上</option><option>暂不确定</option></select></Field></div><Field label="备注"><textarea name="notes" maxLength={200} rows={4} className={cn(fieldClass, "py-3")} placeholder="最多 200 字" /></Field><label className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"><input required type="checkbox" className="mt-1 accent-primary" />我已阅读并同意隐私保护指引。</label><Button disabled={sending} className="w-full">{sending ? "正在提交…" : "提交信息"}<ArrowRight className="size-4" /></Button></form>;
 }
 
-function ContactInfo() { return <div><SectionHeading eyebrow="School contact" title="联系学校" /><div className="mt-6 space-y-3"><ContactLine icon={<MapPin />} title="学校地址" detail="The Palatine Centre, Stockton Road, Durham, UK" action="导航" onClick={() => window.open("https://maps.google.com/?q=Durham+University", "_blank")} /><ContactLine icon={<Phone />} title="咨询电话" detail="+44 (0)191 334 2000（杜伦大学总机）" action="拨打" href="tel:+441913342000" /><ContactLine icon={<Mail />} title="咨询邮箱" detail="admissions@durham.ac.uk（示例）" action="发邮件" href="mailto:admissions@durham.ac.uk?subject=%E6%8B%9B%E7%94%9F%E5%92%A8%E8%AF%A2" /><ContactLine icon={<MessageCircle />} title="微信客服" detail="客服会话待微信主体接入" action="咨询" onClick={() => toast("微信客服待正式小程序接入")} /><ContactLine icon={<Clock3 />} title="工作时间" detail="待校方补充" /></div></div>; }
-function AiHub() { return <div><SectionHeading eyebrow="Technical support" title="AI Hub 工作室" description="技术支持 · 商务合作" /><div className="mt-6 rounded-md border border-border bg-muted p-5"><Sparkles className="size-7 text-primary" /><h2 className="mt-4 text-xl font-bold">合作联系方式</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">以下为演示联系方式，正式信息由甲方提供后替换。</p><div className="mt-5 grid gap-2"><Button variant="outline" asChild><a href="tel:+441913342000"><Phone className="size-4" />联系电话：+44 191 334 2000（示例）</a></Button><Button variant="outline" asChild><a href="mailto:aihub@example.com?subject=%E6%8A%80%E6%9C%AF%E6%94%AF%E6%8C%81%20%2F%20%E5%95%86%E5%8A%A1%E5%90%88%E4%BD%9C"><Mail className="size-4" />联系邮箱：aihub@example.com（待补充）</a></Button></div><p className="hidden"></p></div></div>; }
+function ContactInfo() { const c = useSiteContent("contact"); return <div><SectionHeading eyebrow="School contact" title="联系学校" /><div className="mt-6 space-y-3"><ContactLine icon={<MapPin />} title="学校地址" detail={c.address} action="导航" onClick={() => window.open(c.mapUrl, "_blank", "noopener,noreferrer")} /><ContactLine icon={<Phone />} title="咨询电话" detail={c.phone} action="拨打" href={`tel:${c.phoneTel}`} /><ContactLine icon={<Mail />} title="咨询邮箱" detail={c.email} action="发邮件" href={`mailto:${c.email}?subject=%E6%8B%9B%E7%94%9F%E5%92%A8%E8%AF%A2`} /><ContactLine icon={<MessageCircle />} title="微信客服" detail={c.wechat} action="咨询" onClick={() => toast("微信客服待正式小程序接入")} /><ContactLine icon={<Clock3 />} title="工作时间" detail={c.hours} /></div></div>; }
+function AiHub() { const c = useSiteContent("contact"); return <div><SectionHeading eyebrow="Technical support" title="AI Hub 工作室" description="技术支持 · 商务合作" /><div className="mt-6 rounded-md border border-border bg-muted p-5"><Sparkles className="size-7 text-primary" /><h2 className="mt-4 text-xl font-bold">合作联系方式</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">以下为演示联系方式，正式信息由甲方提供后替换。</p><div className="mt-5 grid gap-2"><Button variant="outline" asChild><a href={`tel:${c.aihubPhoneTel}`}><Phone className="size-4" />联系电话：{c.aihubPhone}</a></Button><Button variant="outline" asChild><a href={`mailto:${c.aihubEmail}?subject=%E6%8A%80%E6%9C%AF%E6%94%AF%E6%8C%81`}><Mail className="size-4" />联系邮箱：{c.aihubEmail}</a></Button></div><p className="hidden"></p></div></div>; }
 
 const SLOT_CAPACITY = 100;
 const TIME_SLOTS = ["上午", "下午"] as const;
@@ -358,7 +339,7 @@ function CancelBooking({ onCancelled }: { onCancelled: () => void }) {
 }
 function OpenDay() { return <div><SectionHeading eyebrow="Coming next" title="校园开放日" description="活动报名为二期功能。" /><div className="mt-6 overflow-hidden rounded-md border border-border"><img src={campusHero} alt="杜伦大学校园开放日" className="aspect-[16/9] w-full object-cover" /><div className="p-5"><p className="text-xs font-semibold text-primary">活动信息待发布</p><h2 className="mt-2 text-xl font-bold">校园开放日与招生说明会</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">活动名称、时间、地点与亮点将在校方确认后展示。</p><Button className="mt-5 w-full" disabled>报名暂未开放</Button></div></div></div>; }
 
-function LaunchAd({ onClose, onOpen }: { onClose: () => void; onOpen: () => void }) { return <div className="fixed inset-0 z-50 grid place-items-center bg-ink/75 p-6" role="dialog" aria-modal="true" aria-label="主推项目"><div className="relative w-full max-w-[340px] overflow-hidden rounded-md bg-primary shadow-2xl"><img src={campusHero} alt="主推项目" className="aspect-[3/4] w-full object-cover" /><div className="absolute inset-0 bg-[linear-gradient(to_top,var(--primary)_2%,transparent_70%)]" /><Button size="icon" variant="secondary" onClick={onClose} aria-label="关闭广告" className="absolute right-3 top-3 rounded-full"><X className="size-5" /></Button><div className="absolute inset-x-0 bottom-0 p-6 text-primary-foreground"><img src={logoWhite.url} alt="Durham University 官方反白标志" className="h-10 w-auto max-w-[220px] object-contain object-left" /><p className="mt-6 text-xs font-bold text-accent">主推项目</p><h2 className="mt-2 text-3xl font-bold">国际本科衔接项目</h2><p className="mt-2 text-sm text-primary-foreground/80">探索项目内容与申请流程</p><Button variant="gold" className="mt-5 w-full" onClick={onOpen}>查看项目详情 <ArrowRight className="size-4" /></Button></div></div></div>; }
+function LaunchAd({ ad, onClose, onOpen }: { ad: LaunchAdContent; onClose: () => void; onOpen: () => void }) { return <div className="fixed inset-0 z-50 grid place-items-center bg-ink/75 p-6" role="dialog" aria-modal="true" aria-label="主推项目"><div className="relative w-full max-w-[340px] overflow-hidden rounded-md bg-primary shadow-2xl"><img src={ad.image} alt={ad.title} className="aspect-[3/4] w-full object-cover" /><div className="absolute inset-0 bg-[linear-gradient(to_top,var(--primary)_2%,transparent_70%)]" /><Button size="icon" variant="secondary" onClick={onClose} aria-label="关闭广告" className="absolute right-3 top-3 rounded-full"><X className="size-5" /></Button><div className="absolute inset-x-0 bottom-0 p-6 text-primary-foreground"><img src={logoWhite.url} alt="Durham University 官方反白标志" className="h-10 w-auto max-w-[220px] object-contain object-left" /><p className="mt-6 text-xs font-bold text-accent">{ad.label}</p><h2 className="mt-2 text-3xl font-bold">{ad.title}</h2><p className="mt-2 text-sm text-primary-foreground/80">{ad.subtitle}</p><Button variant="gold" className="mt-5 w-full" onClick={onOpen}>查看项目详情 <ArrowRight className="size-4" /></Button></div></div></div>; }
 function ConsultModal({ onClose, onForm }: { onClose: () => void; onForm: () => void }) { return <div className="fixed inset-0 z-50 grid place-items-end bg-ink/70 sm:place-items-center" role="dialog" aria-modal="true" aria-label="微信客服"><div className="w-full max-w-[520px] rounded-t-md bg-paper p-6 sm:rounded-md"><div className="flex items-center justify-between"><img src={logoDark.url} alt="Durham University 官方标志" className="h-10 w-auto max-w-[210px]" /><Button variant="ghost" size="icon" onClick={onClose} aria-label="关闭"><X className="size-5" /></Button></div><div className="mt-6 rounded-md bg-muted p-5"><h2 className="font-bold">直接咨询</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">正式微信客服会话待小程序主体接入；你可以先填写意向信息。</p></div><Button className="mt-4 w-full" onClick={onForm}>填写意向信息 <ArrowRight className="size-4" /></Button></div></div>; }
 
 function PageIntro({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) { return <section className="bg-primary px-5 py-9 text-primary-foreground"><p className="text-xs font-bold uppercase text-accent">{eyebrow}</p><h1 className="mt-2 text-4xl font-bold">{title}</h1><p className="mt-3 text-sm leading-6 text-primary-foreground/80">{text}</p></section>; }

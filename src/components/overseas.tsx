@@ -55,15 +55,15 @@ export const projects: Project[] = [
 ];
 
 const types: ProjectType[] = ["国际本科", "硕士项目", "本科直博"];
-const live = projects.filter((p) => p.status === "上架");
-const uniq = (key: keyof Project) => Array.from(new Set(live.map((p) => String(p[key]))));
 const fieldClass = "min-h-11 w-full rounded-md border border-input bg-paper px-3 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
 
 function Tag({ children, inverse }: { children: string; inverse?: boolean }) {
   return <span className={cn("rounded-sm border px-2 py-0.5 text-[11px] font-semibold", inverse ? "border-primary-foreground/40 text-primary-foreground" : "border-primary/25 bg-primary/5 text-primary")}>{children}</span>;
 }
 
-export function Overseas({ onDetail, onConsult, scrollTop }: { onDetail: (id: number) => void; onConsult: () => void; scrollTop: () => void }) {
+export function Overseas({ projects: all, onDetail, onConsult, scrollTop }: { projects: Project[]; onDetail: (id: number) => void; onConsult: () => void; scrollTop: () => void }) {
+  const live = useMemo(() => all.filter((p) => p.status === "上架"), [all]);
+  const uniq = (key: keyof Project) => Array.from(new Set(live.map((p) => String(p[key])).filter(Boolean)));
   const [type, setType] = useState<ProjectType>("国际本科");
   const [query, setQuery] = useState("");
   const [country, setCountry] = useState("");
@@ -73,7 +73,7 @@ export function Overseas({ onDetail, onConsult, scrollTop }: { onDetail: (id: nu
   const shown = useMemo(() => live
     .filter((p) => p.type === type && (!country || p.country === country) && (!mode || p.mode === mode) && (!subject || p.subject === subject))
     .filter((p) => `${p.name}${p.partner}${p.subject}${p.majors.join("")}`.toLowerCase().includes(query.trim().toLowerCase()))
-    .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned)), [type, query, country, mode, subject]);
+    .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned)), [live, type, query, country, mode, subject]);
   const pick = (t: ProjectType) => { setType(t); scrollTop(); };
   const reset = () => { setCountry(""); setMode(""); setSubject(""); setQuery(""); };
 

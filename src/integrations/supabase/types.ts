@@ -101,8 +101,51 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      site_content: {
+        Row: {
+          data: Json
+          key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          data: Json
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          data?: Json
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       staff_profiles: {
         Row: {
+          admin_hidden: boolean
           biography: string | null
           biography_hash: string | null
           biography_zh: string | null
@@ -128,6 +171,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_hidden?: boolean
           biography?: string | null
           biography_hash?: string | null
           biography_zh?: string | null
@@ -153,6 +197,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_hidden?: boolean
           biography?: string | null
           biography_hash?: string | null
           biography_zh?: string | null
@@ -209,6 +254,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -227,6 +293,13 @@ export type Database = {
         Returns: boolean
       }
       cancel_booking_by_code: { Args: { _code: string }; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       search_staff: {
         Args: {
           _departments?: string[]
@@ -250,7 +323,7 @@ export type Database = {
       verify_staff_sync_token: { Args: { _token: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -377,6 +450,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin"],
+    },
   },
 } as const

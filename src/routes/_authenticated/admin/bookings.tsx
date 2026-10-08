@@ -3,11 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Download, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loading, PageHeader, adminField } from "@/components/admin/kit";
+import { Loading, PageHeader, adminField, downloadCsv } from "@/components/admin/kit";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { downloadCsv } from "./leads";
 
 export const Route = createFileRoute("/_authenticated/admin/bookings")({ component: BookingsAdmin });
 

@@ -98,3 +98,11 @@ export function Loading() {
 }
 
 export const lines = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
+
+export function downloadCsv(name: string, rows: (string | number | null)[][]) {
+  const csv = "\uFEFF" + rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+

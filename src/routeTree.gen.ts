@@ -15,10 +15,14 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminAdRouteImport } from './routes/_authenticated/admin/ad'
+import { Route as AuthenticatedAdminBookingsRouteImport } from './routes/_authenticated/admin/bookings'
 import { Route as AuthenticatedAdminCampusRouteImport } from './routes/_authenticated/admin/campus'
 import { Route as AuthenticatedAdminContactRouteImport } from './routes/_authenticated/admin/contact'
+import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin/leads'
 import { Route as AuthenticatedAdminProjectsRouteImport } from './routes/_authenticated/admin/projects'
+import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
 import { Route as AuthenticatedAdminStoriesRouteImport } from './routes/_authenticated/admin/stories'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as ApiPublicHooksSyncStaffRouteImport } from './routes/api/public/hooks/sync-staff'
 
 const IndexRoute = IndexRouteImport.update({
@@ -50,6 +54,12 @@ const AuthenticatedAdminAdRoute = AuthenticatedAdminAdRouteImport.update({
   path: '/ad',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminBookingsRoute =
+  AuthenticatedAdminBookingsRouteImport.update({
+    id: '/bookings',
+    path: '/bookings',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCampusRoute =
   AuthenticatedAdminCampusRouteImport.update({
     id: '/campus',
@@ -62,18 +72,33 @@ const AuthenticatedAdminContactRoute =
     path: '/contact',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminProjectsRoute =
   AuthenticatedAdminProjectsRouteImport.update({
     id: '/projects',
     path: '/projects',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminStoriesRoute =
   AuthenticatedAdminStoriesRouteImport.update({
     id: '/stories',
     path: '/stories',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const ApiPublicHooksSyncStaffRoute = ApiPublicHooksSyncStaffRouteImport.update({
   id: '/api/public/hooks/sync-staff',
   path: '/api/public/hooks/sync-staff',
@@ -85,10 +110,14 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/admin/ad': typeof AuthenticatedAdminAdRoute
+  '/admin/bookings': typeof AuthenticatedAdminBookingsRoute
   '/admin/campus': typeof AuthenticatedAdminCampusRoute
   '/admin/contact': typeof AuthenticatedAdminContactRoute
+  '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/projects': typeof AuthenticatedAdminProjectsRoute
+  '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/hooks/sync-staff': typeof ApiPublicHooksSyncStaffRoute
 }
@@ -96,10 +125,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin/ad': typeof AuthenticatedAdminAdRoute
+  '/admin/bookings': typeof AuthenticatedAdminBookingsRoute
   '/admin/campus': typeof AuthenticatedAdminCampusRoute
   '/admin/contact': typeof AuthenticatedAdminContactRoute
+  '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/projects': typeof AuthenticatedAdminProjectsRoute
+  '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/api/public/hooks/sync-staff': typeof ApiPublicHooksSyncStaffRoute
 }
@@ -110,10 +143,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/admin/ad': typeof AuthenticatedAdminAdRoute
+  '/_authenticated/admin/bookings': typeof AuthenticatedAdminBookingsRoute
   '/_authenticated/admin/campus': typeof AuthenticatedAdminCampusRoute
   '/_authenticated/admin/contact': typeof AuthenticatedAdminContactRoute
+  '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/projects': typeof AuthenticatedAdminProjectsRoute
+  '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/_authenticated/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/hooks/sync-staff': typeof ApiPublicHooksSyncStaffRoute
 }
@@ -124,10 +161,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/admin/ad'
+    | '/admin/bookings'
     | '/admin/campus'
     | '/admin/contact'
+    | '/admin/leads'
     | '/admin/projects'
+    | '/admin/staff'
     | '/admin/stories'
+    | '/admin/users'
     | '/admin/'
     | '/api/public/hooks/sync-staff'
   fileRoutesByTo: FileRoutesByTo
@@ -135,10 +176,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin/ad'
+    | '/admin/bookings'
     | '/admin/campus'
     | '/admin/contact'
+    | '/admin/leads'
     | '/admin/projects'
+    | '/admin/staff'
     | '/admin/stories'
+    | '/admin/users'
     | '/admin'
     | '/api/public/hooks/sync-staff'
   id:
@@ -148,10 +193,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/admin/ad'
+    | '/_authenticated/admin/bookings'
     | '/_authenticated/admin/campus'
     | '/_authenticated/admin/contact'
+    | '/_authenticated/admin/leads'
     | '/_authenticated/admin/projects'
+    | '/_authenticated/admin/staff'
     | '/_authenticated/admin/stories'
+    | '/_authenticated/admin/users'
     | '/_authenticated/admin/'
     | '/api/public/hooks/sync-staff'
   fileRoutesById: FileRoutesById
@@ -207,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/bookings': {
+      id: '/_authenticated/admin/bookings'
+      path: '/bookings'
+      fullPath: '/admin/bookings'
+      preLoaderRoute: typeof AuthenticatedAdminBookingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/campus': {
       id: '/_authenticated/admin/campus'
       path: '/campus'
@@ -221,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminContactRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/leads': {
+      id: '/_authenticated/admin/leads'
+      path: '/leads'
+      fullPath: '/admin/leads'
+      preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/projects': {
       id: '/_authenticated/admin/projects'
       path: '/projects'
@@ -228,11 +291,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProjectsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/staff': {
+      id: '/_authenticated/admin/staff'
+      path: '/staff'
+      fullPath: '/admin/staff'
+      preLoaderRoute: typeof AuthenticatedAdminStaffRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/stories': {
       id: '/_authenticated/admin/stories'
       path: '/stories'
       fullPath: '/admin/stories'
       preLoaderRoute: typeof AuthenticatedAdminStoriesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/api/public/hooks/sync-staff': {
@@ -247,19 +324,27 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdRoute: typeof AuthenticatedAdminAdRoute
+  AuthenticatedAdminBookingsRoute: typeof AuthenticatedAdminBookingsRoute
   AuthenticatedAdminCampusRoute: typeof AuthenticatedAdminCampusRoute
   AuthenticatedAdminContactRoute: typeof AuthenticatedAdminContactRoute
+  AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
   AuthenticatedAdminProjectsRoute: typeof AuthenticatedAdminProjectsRoute
+  AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
   AuthenticatedAdminStoriesRoute: typeof AuthenticatedAdminStoriesRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdRoute: AuthenticatedAdminAdRoute,
+  AuthenticatedAdminBookingsRoute: AuthenticatedAdminBookingsRoute,
   AuthenticatedAdminCampusRoute: AuthenticatedAdminCampusRoute,
   AuthenticatedAdminContactRoute: AuthenticatedAdminContactRoute,
+  AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
   AuthenticatedAdminProjectsRoute: AuthenticatedAdminProjectsRoute,
+  AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
   AuthenticatedAdminStoriesRoute: AuthenticatedAdminStoriesRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 

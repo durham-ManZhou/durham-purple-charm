@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Download, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loading, PageHeader, adminField } from "@/components/admin/kit";
+import { Loading, PageHeader, adminField, downloadCsv } from "@/components/admin/kit";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -11,13 +11,6 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/admin/leads")({ component: LeadsAdmin });
 
 const statuses = ["待跟进", "跟进中", "已转化", "无效"];
-
-export function downloadCsv(name: string, rows: (string | number | null)[][]) {
-  const csv = "\uFEFF" + rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-  a.download = name; a.click(); URL.revokeObjectURL(a.href);
-}
 
 function LeadsAdmin() {
   const qc = useQueryClient();

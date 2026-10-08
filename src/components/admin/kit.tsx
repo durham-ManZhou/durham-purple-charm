@@ -22,7 +22,7 @@ export function Panel({ title, children, className, actions }: { title?: string;
   </section>;
 }
 
-export function FormField({ label, hint, children, className }: { label: string; hint?: string; children: ReactNode; className?: string }) {
+export function FormField({ label, hint, children, className }: { label: string; hint?: string | undefined; children: ReactNode; className?: string | undefined }) {
   return <label className={cn("block", className)}><span className="mb-1.5 block text-xs font-semibold text-foreground">{label}</span>{children}{hint && <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span>}</label>;
 }
 

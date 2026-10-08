@@ -182,7 +182,7 @@ function CampusGallery() {
   const campusScenes = useSiteContent("campus_scenes");
   const [active, setActive] = useState(0);
   const pointerStartX = useRef<number | null>(null);
-  const scene = campusScenes[active] ?? campusScenes[0];
+  const scene = campusScenes[active] ?? campusScenes[0] ?? { image: "", title: "", caption: "" };
   const show = (next: number) => setActive((next + campusScenes.length) % campusScenes.length);
   useEffect(() => {
     const timer = window.setInterval(() => setActive((current) => (current + 1) % campusScenes.length), 4000);

@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authenticated/admin/campus")({ component
 function CampusAdmin() {
   const { draft, update, save, saving, dirty, loading } = useContentDraft("campus_scenes");
   if (loading || !draft) return <Loading />;
-  const move = (i: number, d: number) => update((a) => { const b = [...a]; const [x] = b.splice(i, 1); b.splice(i + d, 0, x); return b; });
+  const move = (i: number, d: number) => update((a) => { const b = [...a]; const [x] = b.splice(i, 1); if (x) b.splice(i + d, 0, x); return b; });
   return <div className="space-y-6">
     <PageHeader eyebrow="Campus gallery" title="校园环境" description="轮播图集，每张图配一句说明，按顺序自动播放。" actions={<>
       <Button variant="outline" onClick={() => update((a) => [...a, { image: "", title: "", caption: "" }])}><Plus className="size-4" />添加图片</Button>
